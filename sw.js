@@ -1,6 +1,6 @@
 // Bewaart de app op de telefoon, zodat hij ook zonder internet werkt.
 // Verhoog VERSION na een update, dan haalt de telefoon de nieuwe bestanden op.
-const VERSION = 'topo-krijt-v1';
+const VERSION = 'topo-krijt-v2';
 const FILES = [
   './',
   'index.html',
@@ -12,9 +12,13 @@ const FILES = [
   'icons/icon-512.png',
   'icons/apple-touch-icon.png',
 ];
+const EXTERNAL = ['fonts.googleapis.com', 'fonts.gstatic.com', 'cdnjs.cloudflare.com'];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(VERSION).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));
+  // Elk bestand apart, zodat één ontbrekend bestand de rest niet tegenhoudt.
+  e.waitUntil(caches.open(VERSION)
+    .then(c => Promise.allSettled(FILES.map(f => c.add(f))))
+    .then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', e => {
@@ -25,19 +29,25 @@ self.addEventListener('activate', e => {
   );
 });
 
+function save(req, res) {
+  if (res.ok || res.type === 'opaque') {
+    const copy = res.clone();
+    caches.open(VERSION).then(c => c.put(req, copy));
+  }
+  return res;
+}
+
 self.addEventListener('fetch', e => {
-  if (e.request.method !== 'GET') return;
-  const url = new URL(e.request.url);
-  const isFont = url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com';
-  if (url.origin !== location.origin && !isFont) return;
-  // Eerst uit de opslag, anders van internet (en dan bewaren).
-  e.respondWith(
-    caches.match(e.request, { ignoreSearch: true }).then(hit => hit || fetch(e.request).then(res => {
-      if (res.ok || res.type === 'opaque') {
-        const copy = res.clone();
-        caches.open(VERSION).then(c => c.put(e.request, copy));
-      }
-      return res;
-    }))
-  );
+  const req = e.request;
+  if (req.method !== 'GET') return;
+  const url = new URL(req.url);
+  if (url.origin !== location.origin && !EXTERNAL.includes(url.hostname)) return;
+  if (req.mode === 'navigate') {
+    // De pagina zelf: eerst van internet (dan zie je updates), offline uit de opslag.
+    e.respondWith(fetch(req).then(res => save(req, res))
+      .catch(() => caches.match(req, { ignoreSearch: true }).then(hit => hit || caches.match('index.html'))));
+    return;
+  }
+  // De rest: eerst uit de opslag, anders van internet (en dan bewaren).
+  e.respondWith(caches.match(req, { ignoreSearch: true }).then(hit => hit || fetch(req).then(res => save(req, res))));
 });
