@@ -1,0 +1,921 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Topo Krijt</title>
+<meta name="description" content="Speels topografie-spel: een land kleurt op en jij typt de naam.">
+<meta name="theme-color" content="#FFF7E8">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Topo Krijt">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat+Brush&family=Patrick+Hand&display=swap">
+<style>
+/* Layout: one-screen phone app. Home = scrollable list of regions; Game = header / map (flex) / answer panel. Single light "paper & crayon" look, chosen on purpose. */
+:root{
+  color-scheme: light;
+  --paper:#FFF7E8;
+  --paper-dot:#EADBC0;
+  --ink:#2B2850;
+  --ink-soft:#6B6790;
+  --ocean:#BFE4F6;
+  --ocean-line:#93CDEB;
+  --land:#FFFDF7;
+  --ctx:#E9E1CF;
+  --coral:#FF5C5C;
+  --coral-soft:#FFD6D3;
+  --good:#2FA866;
+  --good-soft:#D8F5E2;
+  --sun:#FFD25A;
+  --c-blue:#6EC1FF;
+  --c-orange:#FFAA5C;
+  --c-pink:#FF8FB8;
+  --c-green:#7DD87F;
+  --c-teal:#4FD1C5;
+  --c-lilac:#B49CFF;
+  --font-display:"Caveat Brush","Comic Sans MS","Marker Felt",cursive;
+  --font-ui:"Patrick Hand","Comic Sans MS","Chalkboard SE",system-ui,sans-serif;
+  --sketch:255px 18px 225px 18px/18px 225px 18px 255px;
+  --sketch2:18px 225px 18px 255px/255px 18px 225px 18px;
+}
+html,body{height:100%}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;overscroll-behavior:none}
+[hidden]{display:none!important}
+#app{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+#home .home-inner{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+body{
+  background:var(--paper);
+  background-image:radial-gradient(var(--paper-dot) 1.2px, transparent 1.3px);
+  background-size:22px 22px;
+  color:var(--ink);
+  font-family:var(--font-ui);
+  font-size:18px;
+  overflow:hidden;
+  -webkit-tap-highlight-color:transparent;
+}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px dashed var(--coral);outline-offset:3px}
+#app{height:var(--app-h,100%);position:relative}
+.screen{height:100%}
+
+/* ---------- Home ---------- */
+#home{overflow-y:auto;-webkit-overflow-scrolling:touch}
+.home-inner{max-width:640px;margin:0 auto;padding-inline:16px;padding-block:22px 48px;display:flex;flex-direction:column;gap:26px}
+.brand{display:flex;flex-direction:column;gap:4px;align-items:flex-start}
+.brand h1{font-family:var(--font-display);font-weight:400;font-size:clamp(52px,15vw,78px);line-height:.9;margin:0;letter-spacing:.5px}
+.brand h1 .k{color:var(--coral)}
+.brand svg{width:min(240px,62vw);height:18px;margin-top:-2px}
+.brand p{margin:6px 0 0;font-size:19px;line-height:1.35;color:var(--ink-soft);max-width:32ch}
+.cont{display:flex;flex-direction:column;gap:12px}
+.cont-head{display:flex;align-items:baseline;gap:10px}
+.cont-head h2{font-family:var(--font-display);font-weight:400;font-size:36px;margin:0;line-height:1;position:relative;z-index:0}
+.cont-head h2::after{content:"";position:absolute;left:-4px;right:-8px;bottom:2px;height:13px;background:var(--cc);z-index:-1;border-radius:var(--sketch);opacity:.75;transform:rotate(-1deg)}
+.cont-head span{color:var(--ink-soft);font-size:16px}
+.chips{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.chip{
+  text-align:left;background:var(--land);border:2.5px solid var(--ink);border-radius:var(--sketch);
+  padding:10px 14px 9px;box-shadow:3px 4px 0 var(--ink);display:flex;flex-direction:column;gap:2px;
+  transition:transform .12s ease, box-shadow .12s ease;min-width:0;
+}
+.chip:nth-child(even){border-radius:var(--sketch2);transform:rotate(.6deg)}
+.chip:nth-child(odd){transform:rotate(-.5deg)}
+.chip:active{transform:translate(2px,3px) rotate(0);box-shadow:1px 1px 0 var(--ink)}
+.chip.all{background:var(--cc)}
+.chip b{font-weight:400;font-size:21px;line-height:1.1}
+.chip small{font-size:15px;color:var(--ink-soft);display:flex;justify-content:space-between;gap:6px}
+.chip.all small{color:var(--ink)}
+.chip .best{color:var(--ink);white-space:nowrap}
+.foot{color:var(--ink-soft);font-size:15px;line-height:1.4}
+
+/* ---------- Game ---------- */
+#game{display:flex;flex-direction:column;position:relative}
+.bar{display:flex;align-items:center;gap:10px;padding-inline:12px;padding-block:10px 6px}
+.icon-btn{width:44px;height:44px;flex:none;border:2.5px solid var(--ink);background:var(--land);border-radius:50% 46% 52% 48%;display:grid;place-items:center;box-shadow:2px 3px 0 var(--ink);padding:0}
+.icon-btn:active{transform:translate(1px,2px);box-shadow:1px 1px 0 var(--ink)}
+.icon-btn svg{width:22px;height:22px}
+.where{flex:1;min-width:0}
+.where b{display:block;font-family:var(--font-display);font-weight:400;font-size:28px;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.track{height:12px;border:2px solid var(--ink);border-radius:var(--sketch);background:var(--land);margin-top:5px;overflow:hidden}
+.track i{display:block;height:100%;width:0;background:repeating-linear-gradient(-45deg,var(--good) 0 6px,#45c07c 6px 12px);transition:width .4s ease}
+.score{display:flex;flex-direction:column;align-items:flex-end;font-variant-numeric:tabular-nums;line-height:1.05;font-size:17px;flex:none}
+.score .stars{font-size:22px}
+.score .stars svg{width:18px;height:18px;vertical-align:-2px;margin-right:2px}
+
+#mapWrap{flex:1;min-height:0;position:relative;margin-inline:10px;border:3px solid var(--ink);border-radius:22px 30px 20px 28px/28px 20px 30px 22px;overflow:hidden;background:var(--ocean);box-shadow:3px 4px 0 var(--ink)}
+#map{display:block;width:100%;height:100%;touch-action:none;user-select:none;-webkit-user-select:none}
+#map path{vector-effect:non-scaling-stroke;stroke-linejoin:round}
+#map .ocean{fill:url(#waves)}
+#map .grat{fill:none;stroke:var(--ocean-line);stroke-width:1;stroke-dasharray:3 5;opacity:.8}
+#map .ctx{fill:var(--ctx);stroke:#B9AE96;stroke-width:.8}
+#map .land{fill:var(--land);stroke:var(--ink);stroke-width:1.3;transition:fill .5s ease}
+#map .land.done{cursor:pointer}
+#map .land.target{fill:url(#hatch);stroke:var(--ink);stroke-width:2.6}
+#map .glow{fill:none;stroke:var(--coral);stroke-width:9;opacity:.45;animation:pulse 1.3s ease-in-out infinite}
+#map .ring{fill:none;stroke:var(--coral);stroke-width:3.5;stroke-dasharray:7 6;animation:spin 3s linear infinite}
+#map .ring,#map .glow{vector-effect:non-scaling-stroke;pointer-events:none}
+@keyframes pulse{50%{opacity:.08;stroke-width:16}}
+@keyframes spin{to{stroke-dashoffset:-52}}
+.map-tools{position:absolute;right:8px;top:8px;display:flex;flex-direction:column;gap:8px}
+.map-tools .icon-btn{width:40px;height:40px}
+#tip{position:absolute;left:50%;top:10px;transform:translateX(-50%) rotate(-1.5deg);background:var(--sun);border:2.5px solid var(--ink);border-radius:var(--sketch);padding:4px 14px;font-size:20px;box-shadow:2px 3px 0 var(--ink);white-space:nowrap;pointer-events:none;max-width:70%;overflow:hidden;text-overflow:ellipsis}
+#loading{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--font-display);font-size:30px;color:var(--ink)}
+
+#panel{padding-inline:12px;padding-block:10px 12px;display:flex;flex-direction:column;gap:8px}
+#feedback{min-height:28px;font-size:20px;line-height:1.25;text-align:center}
+#feedback.good{color:var(--good)}
+#feedback.bad{color:var(--coral)}
+#feedback b{font-family:var(--font-display);font-weight:400;font-size:26px;color:var(--ink);background:var(--sun);padding:0 6px;border-radius:var(--sketch)}
+#feedback .hint{letter-spacing:3px;font-size:24px;color:var(--ink)}
+.answer-row{display:flex;gap:8px}
+#answer{flex:1;min-width:0;font-size:24px;padding:8px 14px;border:3px solid var(--ink);border-radius:var(--sketch2);background:var(--land);outline:none}
+#answer:focus{background:#fff;box-shadow:0 0 0 4px var(--coral-soft)}
+#answer.shake{animation:shake .38s ease}
+#answer[readonly]{background:var(--ctx)}
+@keyframes shake{20%{transform:translateX(-9px) rotate(-1deg)}40%{transform:translateX(8px)}60%{transform:translateX(-6px) rotate(1deg)}80%{transform:translateX(4px)}}
+.btn{border:3px solid var(--ink);border-radius:var(--sketch);background:var(--coral);color:#fff;font-size:22px;padding:6px 18px;box-shadow:3px 4px 0 var(--ink);flex:none}
+.btn:active{transform:translate(2px,3px);box-shadow:1px 1px 0 var(--ink)}
+.btn.ghost{background:var(--land);color:var(--ink);font-size:19px;padding:4px 14px}
+.btn.go{background:var(--good)}
+.sub-row{display:flex;gap:10px;justify-content:center}
+
+/* confetti */
+.bit{position:absolute;width:10px;height:6px;border-radius:3px;pointer-events:none;z-index:5;animation:fly .8s cubic-bezier(.2,.7,.3,1) forwards}
+@keyframes fly{to{transform:translate(var(--dx),var(--dy)) rotate(var(--r));opacity:0}}
+
+/* end sheet */
+#sheet{position:absolute;left:10px;right:10px;bottom:10px;background:var(--land);border:3px solid var(--ink);border-radius:26px 20px 28px 22px/20px 28px 22px 26px;box-shadow:4px 5px 0 var(--ink);padding:16px;display:flex;flex-direction:column;gap:10px;max-height:62%;overflow-y:auto;z-index:6}
+#sheet h3{font-family:var(--font-display);font-weight:400;font-size:34px;margin:0;line-height:1}
+#sheet .big{font-size:21px;line-height:1.3}
+#sheet .big strong{font-family:var(--font-display);font-weight:400;font-size:40px;color:var(--coral);vertical-align:-4px}
+#sheet .tricky{display:flex;flex-wrap:wrap;gap:6px}
+#sheet .tricky button{border:2px solid var(--ink);background:var(--coral-soft);border-radius:var(--sketch);padding:2px 10px;font-size:17px}
+#sheet .acts{display:flex;flex-wrap:wrap;gap:10px;margin-top:4px}
+#sheet .note{font-size:16px;color:var(--ink-soft)}
+
+@media (prefers-reduced-motion: reduce){
+  *{animation:none!important;transition:none!important}
+}
+</style>
+
+</head>
+<body>
+<div id="app">
+  <section id="home" class="screen">
+    <div class="home-inner">
+      <div class="brand">
+        <h1>Topo <span class="k">Krijt</span></h1>
+        <svg viewBox="0 0 240 18" aria-hidden="true"><path d="M3 11 C 40 3, 70 16, 110 8 S 180 4, 236 10" fill="none" stroke="var(--coral)" stroke-width="5" stroke-linecap="round"/></svg>
+        <p>Kies een gebied. Eén land krijgt een kleurtje, jij typt de naam. Hoofdletters en accenten maken niet uit.</p>
+      </div>
+      <div id="conts"></div>
+      <p class="foot">Elk goed land kleur je in. Fout of overgeslagen? Dan komt het land later in de ronde terug. Tip: knijp of veeg op de kaart om in te zoomen.</p>
+    </div>
+  </section>
+
+  <section id="game" class="screen" hidden>
+    <div class="bar">
+      <button class="icon-btn" id="quitBtn" type="button" aria-label="Terug naar gebieden">
+        <svg viewBox="0 0 24 24"><path d="M15 4 L7 12 L15 20" fill="none" stroke="var(--ink)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="where">
+        <b id="regionName">Europa</b>
+        <div class="track"><i id="progFill"></i></div>
+      </div>
+      <div class="score">
+        <span class="stars"><svg viewBox="0 0 24 24"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6L2.5 9.4l6.6-.8z" fill="var(--sun)" stroke="var(--ink)" stroke-width="2" stroke-linejoin="round"/></svg><span id="starCount">0</span></span>
+        <span id="progText">0 / 0</span>
+      </div>
+    </div>
+
+    <div id="mapWrap">
+      <svg id="map" role="img" aria-label="Kaart">
+        <defs>
+          <pattern id="hatch" patternUnits="userSpaceOnUse" width="9" height="9" patternTransform="rotate(45)">
+            <rect width="9" height="9" fill="var(--coral)"/>
+            <line x1="0" y1="0" x2="0" y2="9" stroke="#FFB0A8" stroke-width="3.2"/>
+          </pattern>
+          <pattern id="waves" patternUnits="userSpaceOnUse" width="46" height="26">
+            <rect width="46" height="26" fill="var(--ocean)"/>
+            <path d="M4 9 q4 -4 8 0 t8 0" fill="none" stroke="var(--ocean-line)" stroke-width="1.6" stroke-linecap="round"/>
+            <path d="M27 21 q4 -4 8 0 t8 0" fill="none" stroke="var(--ocean-line)" stroke-width="1.6" stroke-linecap="round"/>
+          </pattern>
+          <filter id="wobble" x="-20%" y="-20%" width="140%" height="140%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="3" result="n"/>
+            <feDisplacementMap in="SourceGraphic" in2="n" scale="5" xChannelSelector="R" yChannelSelector="G"/>
+          </filter>
+        </defs>
+        <rect class="ocean" id="oceanRect" x="0" y="0" width="100%" height="100%"/>
+        <g id="zoomLayer">
+          <path class="grat" id="grat"/>
+          <g id="countries"></g>
+        </g>
+        <g filter="url(#wobble)"><g id="fxLayer"><path class="glow" id="glow"/><circle class="ring" id="ring" r="0" hidden/></g></g>
+      </svg>
+      <div class="map-tools">
+        <button class="icon-btn" id="fitBtn" type="button" aria-label="Hele gebied tonen">
+          <svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" fill="none" stroke="var(--ink)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+      <div id="tip" hidden></div>
+      <div id="loading" hidden>Kaart tekenen…</div>
+    </div>
+
+    <form id="panel" autocomplete="off">
+      <div id="feedback">Welk land is dit?</div>
+      <div class="answer-row">
+        <input id="answer" type="text" inputmode="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="go" placeholder="Typ het land…" aria-label="Naam van het land">
+        <button class="btn" id="checkBtn" type="submit">Check</button>
+      </div>
+      <div class="sub-row">
+        <button class="btn ghost" id="hintBtn" type="button">Hint</button>
+        <button class="btn ghost" id="skipBtn" type="button">Weet ik niet</button>
+      </div>
+    </form>
+
+    <div id="sheet" hidden></div>
+  </section>
+</div>
+
+<script src="lib/d3.min.js"></script>
+<script src="lib/topojson.min.js"></script>
+<script>
+(() => {
+/* ================= Data ================= */
+// id | deelgebied | Nederlandse naam | andere goede antwoorden
+const RAW = `
+352|eu-n|IJsland|Iceland
+578|eu-n|Noorwegen|Norway
+752|eu-n|Zweden|Sweden
+246|eu-n|Finland|Suomi
+208|eu-n|Denemarken|Denmark
+233|eu-n|Estland|Estonia
+428|eu-n|Letland|Latvia
+440|eu-n|Litouwen|Lithuania
+826|eu-n|Verenigd Koninkrijk|VK;UK;Groot-Brittannië;Engeland;United Kingdom;Great Britain;Brittannië
+372|eu-n|Ierland|Ireland;Eire
+528|eu-w|Nederland|Holland;Netherlands
+056|eu-w|België|Belgium
+442|eu-w|Luxemburg|Luxembourg
+250|eu-w|Frankrijk|France
+276|eu-w|Duitsland|Germany;Deutschland
+756|eu-w|Zwitserland|Switzerland;Schweiz
+040|eu-w|Oostenrijk|Austria
+438|eu-w|Liechtenstein|
+492|eu-w|Monaco|
+620|eu-s|Portugal|
+724|eu-s|Spanje|Spain;España
+020|eu-s|Andorra|
+380|eu-s|Italië|Italy
+674|eu-s|San Marino|
+336|eu-s|Vaticaanstad|Vaticaan;Vatican;Vaticanstad
+470|eu-s|Malta|
+300|eu-s|Griekenland|Greece
+196|eu-s|Cyprus|
+616|eu-e|Polen|Poland
+203|eu-e|Tsjechië|Tsjechische Republiek;Czechia;Czech Republic
+703|eu-e|Slowakije|Slovakia
+348|eu-e|Hongarije|Hungary
+642|eu-e|Roemenië|Romania
+100|eu-e|Bulgarije|Bulgaria
+498|eu-e|Moldavië|Moldova
+804|eu-e|Oekraïne|Ukraine
+112|eu-e|Belarus|Wit-Rusland
+643|eu-e|Rusland|Russia;Russische Federatie
+705|eu-b|Slovenië|Slovenia
+191|eu-b|Kroatië|Croatia
+070|eu-b|Bosnië en Herzegovina|Bosnië;Bosnië-Herzegovina;Bosnia
+688|eu-b|Servië|Serbia
+499|eu-b|Montenegro|
+XK|eu-b|Kosovo|
+008|eu-b|Albanië|Albania
+807|eu-b|Noord-Macedonië|Macedonië;Macedonia;North Macedonia
+504|af-n|Marokko|Morocco
+732|af-n|Westelijke Sahara|West-Sahara;Western Sahara
+012|af-n|Algerije|Algeria
+788|af-n|Tunesië|Tunisia
+434|af-n|Libië|Libya
+818|af-n|Egypte|Egypt
+729|af-n|Soedan|Sudan
+478|af-w|Mauritanië|Mauritania
+686|af-w|Senegal|
+270|af-w|Gambia|
+624|af-w|Guinee-Bissau|Guinea-Bissau
+324|af-w|Guinee|Guinea
+694|af-w|Sierra Leone|
+430|af-w|Liberia|
+384|af-w|Ivoorkust|Côte d'Ivoire;Ivory Coast
+288|af-w|Ghana|
+768|af-w|Togo|
+204|af-w|Benin|
+566|af-w|Nigeria|
+562|af-w|Niger|
+466|af-w|Mali|
+854|af-w|Burkina Faso|
+132|af-w|Kaapverdië|Cabo Verde;Cape Verde;Kaapverdische Eilanden
+148|af-c|Tsjaad|Chad
+120|af-c|Kameroen|Cameroon
+140|af-c|Centraal-Afrikaanse Republiek|CAR;Centraal-Afrika;Central African Republic
+226|af-c|Equatoriaal-Guinea|Equatorial Guinea
+266|af-c|Gabon|
+178|af-c|Congo-Brazzaville|Congo;Republiek Congo;Republic of the Congo
+180|af-c|Congo-Kinshasa|DR Congo;DRC;Democratische Republiek Congo;Zaïre
+678|af-c|Sao Tomé en Principe|Sao Tome;Sao Tome and Principe
+728|af-e|Zuid-Soedan|South Sudan
+231|af-e|Ethiopië|Ethiopia
+232|af-e|Eritrea|
+262|af-e|Djibouti|
+706|af-e|Somalië|Somalia
+404|af-e|Kenia|Kenya
+800|af-e|Oeganda|Uganda
+646|af-e|Rwanda|
+108|af-e|Burundi|
+834|af-e|Tanzania|
+690|af-e|Seychellen|Seychelles
+174|af-e|Comoren|Comoros
+024|af-z|Angola|
+894|af-z|Zambia|
+454|af-z|Malawi|
+508|af-z|Mozambique|
+716|af-z|Zimbabwe|
+072|af-z|Botswana|
+516|af-z|Namibië|Namibia
+710|af-z|Zuid-Afrika|South Africa
+426|af-z|Lesotho|
+748|af-z|Eswatini|Swaziland
+450|af-z|Madagaskar|Madagascar
+480|af-z|Mauritius|
+792|as-mo|Turkije|Turkey;Türkiye
+760|as-mo|Syrië|Syria
+422|as-mo|Libanon|Lebanon
+376|as-mo|Israël|
+275|as-mo|Palestina|Palestine;Palestijnse Gebieden
+400|as-mo|Jordanië|Jordan
+368|as-mo|Irak|Iraq
+364|as-mo|Iran|Perzië
+682|as-mo|Saoedi-Arabië|Saudi-Arabië;Saudi Arabia
+887|as-mo|Jemen|Yemen
+512|as-mo|Oman|
+784|as-mo|Verenigde Arabische Emiraten|VAE;Emiraten;UAE;United Arab Emirates
+634|as-mo|Qatar|Katar
+048|as-mo|Bahrein|Bahrain
+414|as-mo|Koeweit|Kuwait
+268|as-mo|Georgië|Georgia
+051|as-mo|Armenië|Armenia
+031|as-mo|Azerbeidzjan|Azerbaijan;Azerbeidjan;Azerbaidzjan
+398|as-c|Kazachstan|Kazakhstan;Kazakstan
+860|as-c|Oezbekistan|Uzbekistan
+795|as-c|Turkmenistan|Turkmenië
+762|as-c|Tadzjikistan|Tajikistan;Tadjikistan
+417|as-c|Kirgizië|Kirgizstan;Kyrgyzstan;Kirgistan
+004|as-c|Afghanistan|
+356|as-z|India|
+586|as-z|Pakistan|
+050|as-z|Bangladesh|
+524|as-z|Nepal|
+064|as-z|Bhutan|
+144|as-z|Sri Lanka|Ceylon
+462|as-z|Maldiven|Malediven;Maldives
+156|as-o|China|
+496|as-o|Mongolië|Mongolia
+408|as-o|Noord-Korea|North Korea
+410|as-o|Zuid-Korea|South Korea;Korea
+392|as-o|Japan|
+158|as-o|Taiwan|
+104|as-zo|Myanmar|Birma;Burma
+764|as-zo|Thailand|
+418|as-zo|Laos|
+116|as-zo|Cambodja|Cambodia;Kambodja
+704|as-zo|Vietnam|
+458|as-zo|Maleisië|Malaysia
+702|as-zo|Singapore|
+096|as-zo|Brunei|
+360|as-zo|Indonesië|Indonesia
+608|as-zo|Filipijnen|Philippines;Filippijnen
+626|as-zo|Oost-Timor|Timor-Leste;East Timor;Timor
+124|am-n|Canada|
+840|am-n|Verenigde Staten|VS;USA;Amerika;United States;Verenigde Staten van Amerika
+484|am-n|Mexico|
+304|am-n|Groenland|Greenland
+320|am-m|Guatemala|
+084|am-m|Belize|
+340|am-m|Honduras|
+222|am-m|El Salvador|Salvador
+558|am-m|Nicaragua|
+188|am-m|Costa Rica|
+591|am-m|Panama|
+192|am-c|Cuba|
+388|am-c|Jamaica|
+332|am-c|Haïti|
+214|am-c|Dominicaanse Republiek|Dominican Republic
+044|am-c|Bahama's|Bahamas
+780|am-c|Trinidad en Tobago|Trinidad
+052|am-c|Barbados|
+028|am-c|Antigua en Barbuda|Antigua
+212|am-c|Dominica|
+662|am-c|Saint Lucia|Lucia
+670|am-c|Saint Vincent en de Grenadines|Saint Vincent
+308|am-c|Grenada|
+659|am-c|Saint Kitts en Nevis|Saint Kitts
+533|am-c|Aruba|
+531|am-c|Curaçao|
+534|am-c|Sint Maarten|
+630|am-c|Puerto Rico|
+170|am-z|Colombia|Columbia
+862|am-z|Venezuela|
+328|am-z|Guyana|
+740|am-z|Suriname|
+218|am-z|Ecuador|
+604|am-z|Peru|
+076|am-z|Brazilië|Brazil;Brasil
+068|am-z|Bolivia|
+600|am-z|Paraguay|
+858|am-z|Uruguay|
+032|am-z|Argentinië|Argentina
+152|am-z|Chili|Chile
+036|oc|Australië|Australia
+554|oc|Nieuw-Zeeland|New Zealand
+598|oc|Papoea-Nieuw-Guinea|Papua New Guinea;PNG
+242|oc|Fiji|Fidji
+090|oc|Salomonseilanden|Solomon Islands;Salomons
+548|oc|Vanuatu|
+882|oc|Samoa|
+776|oc|Tonga|
+296|oc|Kiribati|
+583|oc|Micronesia|Micronesië;Federale Staten van Micronesia
+584|oc|Marshalleilanden|Marshall Islands
+585|oc|Palau|
+520|oc|Nauru|
+`.trim().split('\n').map(l => {
+  const [id, sub, name, alt] = l.split('|');
+  return { id, sub, cont: sub.split('-')[0], name, alt: alt ? alt.split(';') : [] };
+});
+const C = Object.fromEntries(RAW.map(c => [c.id, c]));
+
+const CONTS = [
+  { id:'eu', name:'Europa', color:'var(--c-blue)' },
+  { id:'af', name:'Afrika', color:'var(--c-orange)' },
+  { id:'as', name:'Azië', color:'var(--c-pink)' },
+  { id:'am', name:'Amerika', color:'var(--c-green)' },
+  { id:'oc', name:'Oceanië', color:'var(--c-teal)' },
+  { id:'wereld', name:'De hele wereld', color:'var(--c-lilac)' },
+];
+// ext = [west, oost, zuid, noord] in graden; bepaalt het kaartbeeld
+const SUBS = [
+  { id:'eu',    cont:'eu', name:'Heel Europa',       ext:[-25,45,34,71], all:true },
+  { id:'eu-n',  cont:'eu', name:'Noord-Europa',      ext:[-25,32,50,71] },
+  { id:'eu-w',  cont:'eu', name:'West-Europa',       ext:[-5,17,42,55] },
+  { id:'eu-s',  cont:'eu', name:'Zuid-Europa',       ext:[-10,35,34,47] },
+  { id:'eu-e',  cont:'eu', name:'Oost-Europa',       ext:[12,45,41,60] },
+  { id:'eu-b',  cont:'eu', name:'De Balkan',         ext:[13,24,39,47] },
+  { id:'af',    cont:'af', name:'Heel Afrika',       ext:[-25,58,-36,38], all:true },
+  { id:'af-n',  cont:'af', name:'Noord-Afrika',      ext:[-18,38,9,38] },
+  { id:'af-w',  cont:'af', name:'West-Afrika',       ext:[-25,16,3,27] },
+  { id:'af-c',  cont:'af', name:'Centraal-Afrika',   ext:[7,32,-14,24] },
+  { id:'af-e',  cont:'af', name:'Oost-Afrika',       ext:[22,57,-12,18] },
+  { id:'af-z',  cont:'af', name:'Zuidelijk Afrika',  ext:[11,58,-35,-4] },
+  { id:'as',    cont:'as', name:'Heel Azië',         ext:[25,146,-11,56], all:true },
+  { id:'as-mo', cont:'as', name:'Midden-Oosten & Kaukasus', ext:[25,63,12,43] },
+  { id:'as-c',  cont:'as', name:'Centraal-Azië',     ext:[46,88,29,56] },
+  { id:'as-z',  cont:'as', name:'Zuid-Azië',         ext:[60,98,-1,37] },
+  { id:'as-o',  cont:'as', name:'Oost-Azië',         ext:[73,146,18,54] },
+  { id:'as-zo', cont:'as', name:'Zuidoost-Azië',     ext:[92,142,-11,29] },
+  { id:'am',    cont:'am', name:'Heel Amerika',      ext:[-170,-30,-56,80], all:true },
+  { id:'am-n',  cont:'am', name:'Noord-Amerika',     ext:[-170,-15,14,80] },
+  { id:'am-m',  cont:'am', name:'Midden-Amerika',    ext:[-93,-76,6,19] },
+  { id:'am-c',  cont:'am', name:'Caraïben',          ext:[-86,-59,10,27] },
+  { id:'am-z',  cont:'am', name:'Zuid-Amerika',      ext:[-82,-34,-56,13] },
+  { id:'oc',    cont:'oc', name:'Oceanië',           ext:[110,192,-48,12], all:true },
+  { id:'wereld',cont:'wereld', name:'Alle landen', world:true, all:true },
+];
+const keysOf = sub => RAW.filter(c => sub.world ? true : sub.all ? c.cont === sub.cont : c.sub === sub.id).map(c => c.id);
+
+/* ================= Antwoord controleren ================= */
+const norm = s => s.toLowerCase().trim()
+  .normalize('NFD').replace(/[̀-ͯ]/g, '')
+  .replace(/&/g, ' en ')
+  .replace(/^(de|het|the)\s+/, '')
+  .replace(/\b(saint\s*|st\.\s*|st\s+)/g, 'sint ')
+  .replace(/[^a-z0-9]/g, '');
+const NAMES = RAW.map(c => ({ id: c.id, list: [...new Set([c.name, ...c.alt].map(norm))] }));
+function lev(a, b) {
+  if (a === b) return 0;
+  const m = a.length, n = b.length; if (!m) return n; if (!n) return m;
+  let prev = Array.from({ length: n + 1 }, (_, j) => j);
+  for (let i = 1; i <= m; i++) {
+    const cur = [i];
+    for (let j = 1; j <= n; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    prev = cur;
+  }
+  return prev[n];
+}
+function check(input, id) {
+  const v = norm(input);
+  if (!v) return { kind: 'empty' };
+  const mine = NAMES.find(x => x.id === id).list;
+  if (mine.includes(v)) return { kind: 'exact' };
+  const other = NAMES.find(x => x.id !== id && x.list.includes(v));
+  if (other) return { kind: 'other', id: other.id };
+  const d = Math.min(...mine.map(n => lev(v, n)));
+  const allowed = v.length >= 9 ? 2 : v.length >= 5 ? 1 : 0;
+  if (d <= allowed) {
+    const rival = NAMES.some(x => x.id !== id && x.list.some(n => lev(v, n) <= d));
+    if (!rival) return { kind: 'close' };
+  }
+  return { kind: 'wrong' };
+}
+
+/* ================= Opslag (best score) ================= */
+const store = {
+  get(k) { try { return JSON.parse(localStorage.getItem('topokrijt.' + k)); } catch { return null; } },
+  set(k, v) { try { localStorage.setItem('topokrijt.' + k, JSON.stringify(v)); } catch {} },
+};
+
+/* ================= Home ================= */
+const $ = s => document.querySelector(s);
+function renderHome() {
+  const wrap = $('#conts');
+  wrap.innerHTML = '';
+  wrap.style.display = 'flex'; wrap.style.flexDirection = 'column'; wrap.style.gap = '26px';
+  for (const cont of CONTS) {
+    const subs = SUBS.filter(s => s.cont === cont.id);
+    const total = cont.id === 'wereld' ? RAW.length : RAW.filter(c => c.cont === cont.id).length;
+    const sec = document.createElement('div');
+    sec.className = 'cont';
+    sec.style.setProperty('--cc', cont.color);
+    sec.innerHTML = `<div class="cont-head"><h2>${cont.name}</h2><span>${total} landen</span></div><div class="chips"></div>`;
+    const chips = sec.querySelector('.chips');
+    for (const s of subs) {
+      const n = keysOf(s).length;
+      const best = store.get('best.' + s.id);
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip' + (s.all ? ' all' : '');
+      b.innerHTML = `<b>${s.name}</b><small><span>${n} landen</span>${best ? `<span class="best">★ ${best.perfect}/${best.total}</span>` : ''}</small>`;
+      b.addEventListener('click', () => startRound(s));
+      chips.appendChild(b);
+    }
+    wrap.appendChild(sec);
+  }
+}
+
+/* ================= Kaart ================= */
+let FEAT = null;          // id -> Feature
+let BOUNDS = {};          // id -> geoBounds
+let COLOR = {};           // id -> kleur
+const CRAYONS = ['#FFD25A', '#7DD87F', '#6EC1FF', '#FF8FB8', '#B49CFF', '#FFAA5C', '#4FD1C5'];
+const MERGE = { 'Somaliland': '706', 'N. Cyprus': '196', 'Kosovo': 'XK', 'Åland': '246', 'Hong Kong': '156', 'Macao': '156' };
+const DROP = new Set(['010']);
+
+const mapReady = fetch('countries-50m.json').then(r => {
+  if (!r.ok) throw new Error('kaart');
+  return r.json();
+}).then(topo => {
+  const geoms = topo.objects.countries.geometries;
+  const keyOf = g => MERGE[g.properties.name] || (g.id && g.properties.name !== 'Ashmore and Cartier Is.' ? g.id : 'x-' + g.properties.name);
+  const groups = new Map();
+  geoms.forEach((g, i) => {
+    const k = keyOf(g); if (DROP.has(k)) return;
+    if (!groups.has(k)) groups.set(k, []);
+    groups.get(k).push(i);
+  });
+  FEAT = {};
+  for (const [k, idx] of groups) {
+    const geometry = idx.length > 1 ? topojson.merge(topo, idx.map(i => geoms[i])) : topojson.feature(topo, geoms[idx[0]]).geometry;
+    FEAT[k] = { type: 'Feature', id: k, geometry };
+    BOUNDS[k] = d3.geoBounds(FEAT[k]);
+  }
+  // buurlanden krijgen verschillende kleuren
+  const nb = topojson.neighbors(geoms);
+  const adj = {};
+  geoms.forEach((g, i) => {
+    const a = keyOf(g);
+    for (const j of nb[i]) { const b = keyOf(geoms[j]); if (a !== b) (adj[a] ||= new Set()).add(b); }
+  });
+  const order = Object.keys(FEAT).sort((a, b) => (adj[b]?.size || 0) - (adj[a]?.size || 0));
+  order.forEach((k, n) => {
+    const used = new Set([...(adj[k] || [])].map(x => COLOR[x]).filter(Boolean));
+    const start = n % CRAYONS.length;
+    for (let i = 0; i < CRAYONS.length; i++) {
+      const c = CRAYONS[(start + i) % CRAYONS.length];
+      if (!used.has(c)) { COLOR[k] = c; break; }
+    }
+    COLOR[k] ||= CRAYONS[start];
+  });
+});
+
+const svg = d3.select('#map');
+const zoomLayer = d3.select('#zoomLayer');
+const fxLayer = d3.select('#fxLayer');
+const gCountries = d3.select('#countries');
+let W = 0, H = 0, path = null, curK = 1;
+const zoom = d3.zoom().scaleExtent([1, 24]).on('zoom', ev => {
+  const t = ev.transform; curK = t.k;
+  zoomLayer.attr('transform', t);
+  fxLayer.attr('transform', t);
+  d3.select('#hatch').attr('patternTransform', `rotate(45) scale(${1 / t.k})`);
+  updateRing();
+});
+svg.call(zoom).on('dblclick.zoom', null);
+
+function inExt(b, ext, pad) {
+  const [[w, s], [e, n]] = b;
+  if (w > e) return true; // ligt over de datumgrens
+  const [l0, l1, a0, a1] = ext;
+  if (n < a0 - pad || s > a1 + pad) return false;
+  return [0, 360, -360].some(o => !(e + o < l0 - pad || w + o > l1 + pad));
+}
+
+function drawMap() {
+  const wrap = $('#mapWrap');
+  W = wrap.clientWidth; H = wrap.clientHeight;
+  if (!W || !H) return;
+  svg.attr('viewBox', `0 0 ${W} ${H}`);
+  const sub = state.sub;
+  let proj;
+  if (sub.world) {
+    proj = d3.geoNaturalEarth1().fitExtent([[8, 8], [W - 8, H - 8]], { type: 'Sphere' });
+  } else {
+    const [l0, l1, a0, a1] = sub.ext;
+    const pts = [];
+    for (let i = 0; i <= 8; i++) for (let j = 0; j <= 8; j++) pts.push([l0 + (l1 - l0) * i / 8, a0 + (a1 - a0) * j / 8]);
+    proj = d3.geoAzimuthalEqualArea().rotate([-(l0 + l1) / 2, -(a0 + a1) / 2]).clipAngle(90)
+      .fitExtent([[14, 14], [W - 14, H - 14]], { type: 'MultiPoint', coordinates: pts });
+  }
+  path = d3.geoPath(proj);
+  d3.select('#grat').attr('d', path(d3.geoGraticule10()));
+  const inRound = new Set(state.keys);
+  const ids = Object.keys(FEAT).filter(k => inRound.has(k) || sub.world || inExt(BOUNDS[k], sub.ext, 22));
+  ids.sort((a, b) => inRound.has(a) - inRound.has(b));
+  gCountries.selectAll('path').data(ids, d => d).join('path')
+    .attr('d', k => path(FEAT[k]))
+    .attr('class', k => inRound.has(k) ? 'land' : 'ctx')
+    .on('click', (ev, k) => {
+      if (!C[k] || !inRound.has(k)) return;
+      if (state.done.has(k) || state.finished) showTip(C[k].name);
+    });
+  paintStates();
+  zoom.translateExtent([[0, 0], [W, H]]).extent([[0, 0], [W, H]]);
+}
+
+function paintStates() {
+  gCountries.selectAll('path.land')
+    .classed('target', k => k === state.current && !state.finished)
+    .classed('done', k => state.done.has(k))
+    .style('fill', k => (k === state.current && !state.finished) ? null : state.done.has(k) ? COLOR[k] : null);
+  const tgt = gCountries.selectAll('path.target');
+  tgt.raise();
+  const d = (!state.finished && state.current) ? path(FEAT[state.current]) : null;
+  d3.select('#glow').attr('d', d);
+}
+
+let ringAt = null;
+function targetBox(k) {
+  const g = FEAT[k].geometry;
+  const polys = g.type === 'Polygon' ? [g.coordinates] : g.coordinates;
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (const p of polys) {
+    const b = path.bounds({ type: 'Polygon', coordinates: p });
+    if (!isFinite(b[0][0])) continue;
+    const cx = (b[0][0] + b[1][0]) / 2, cy = (b[0][1] + b[1][1]) / 2;
+    if (cx < 0 || cx > W || cy < 0 || cy > H) continue;
+    x0 = Math.min(x0, b[0][0]); y0 = Math.min(y0, b[0][1]); x1 = Math.max(x1, b[1][0]); y1 = Math.max(y1, b[1][1]);
+  }
+  if (!isFinite(x0)) { const b = path.bounds(FEAT[k]); [[x0, y0], [x1, y1]] = b; }
+  return { cx: (x0 + x1) / 2, cy: (y0 + y1) / 2, size: Math.max(x1 - x0, y1 - y0, 0.5) };
+}
+function zoomTo(k, animate = true) {
+  let t = d3.zoomIdentity;
+  ringAt = null;
+  if (k) {
+    const b = targetBox(k);
+    const kmax = state.sub.world ? 10 : state.sub.all ? 6 : 4;
+    let s = Math.min(Math.max(Math.min(W, H) * 0.26 / b.size, 1), kmax);
+    if (s < 1.6) s = 1;
+    if (s > 1) t = d3.zoomIdentity.translate(W / 2 - s * b.cx, H / 2 - s * b.cy).scale(s);
+    if (b.size * s < 22) ringAt = b;
+  }
+  (animate ? svg.transition().duration(650).ease(d3.easeCubicInOut) : svg).call(zoom.transform, t);
+  updateRing();
+}
+function updateRing() {
+  const r = d3.select('#ring');
+  if (!ringAt || state.finished) { r.attr('hidden', ''); return; }
+  r.attr('hidden', null).attr('cx', ringAt.cx).attr('cy', ringAt.cy).attr('r', 20 / curK);
+}
+
+let tipTimer;
+function showTip(text) {
+  const tip = $('#tip'); tip.textContent = text; tip.hidden = false;
+  clearTimeout(tipTimer); tipTimer = setTimeout(() => tip.hidden = true, 1800);
+}
+
+/* ================= Spel ================= */
+const state = { sub: SUBS[0], keys: [], queue: [], done: new Set(), stats: {}, current: null, tries: 0, hint: 0, revealed: false, perfect: 0, streak: 0, finished: false, busy: false, practice: false };
+const input = $('#answer'), fb = $('#feedback'), checkBtn = $('#checkBtn');
+
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+
+async function startRound(sub, only = null) {
+  Object.assign(state, { sub, keys: only || keysOf(sub), done: new Set(), stats: {}, current: null, perfect: 0, streak: 0, finished: false, busy: false, practice: !!only });
+  state.queue = shuffle([...state.keys]);
+  state.keys.forEach(k => state.stats[k] = { wrong: 0, hint: 0, revealed: false });
+  $('#home').hidden = true; $('#game').hidden = false; $('#sheet').hidden = true;
+  $('#regionName').textContent = sub.name + (only ? ' · oefenen' : '');
+  input.readOnly = false; input.value = '';
+  updateHud();
+  if (!FEAT) {
+    $('#loading').hidden = false;
+    try { await mapReady; } catch { $('#loading').textContent = 'Kaart laden lukt niet. Check je internet en probeer opnieuw.'; return; }
+    $('#loading').hidden = true;
+  }
+  gCountries.selectAll('path').remove();
+  svg.call(zoom.transform, d3.zoomIdentity);
+  drawMap();
+  next();
+}
+
+function next() {
+  state.busy = false;
+  if (!state.queue.length) return finish();
+  state.current = state.queue.shift();
+  state.tries = 0; state.hint = 0; state.revealed = false;
+  input.readOnly = false; input.value = '';
+  checkBtn.textContent = 'Check'; checkBtn.classList.remove('go');
+  setFb('Welk land is dit?');
+  paintStates();
+  zoomTo(state.current);
+  updateHud();
+  input.focus({ preventScroll: true });
+}
+
+function setFb(html, cls = '') { fb.innerHTML = html; fb.className = cls; }
+function updateHud() {
+  const n = state.keys.length, d = state.done.size;
+  $('#progText').textContent = `${d} / ${n}`;
+  $('#progFill').style.width = (n ? d / n * 100 : 0) + '%';
+  $('#starCount').textContent = state.perfect;
+}
+
+const PRAISE = ['Goed zo!', 'Top!', 'Knap!', 'Raak!', 'Yes!', 'Lekker bezig!', 'Helemaal goed!', 'Precies!'];
+const pick = a => a[Math.floor(Math.random() * a.length)];
+
+function submit() {
+  if (state.busy || state.finished || !state.current) return;
+  if (state.revealed) { requeue(); next(); return; }
+  const res = check(input.value, state.current);
+  const k = state.current, c = C[k], st = state.stats[k];
+  if (res.kind === 'empty') { shake(); return; }
+  if (res.kind === 'exact' || res.kind === 'close') {
+    const first = state.tries === 0 && state.hint === 0 && !st.revealed;
+    if (first) { state.perfect++; state.streak++; } else state.streak = 0;
+    state.done.add(k);
+    state.busy = true;
+    let msg = `${pick(PRAISE)} <b>${c.name}</b>`;
+    if (res.kind === 'close') msg = `Goed! Zo schrijf je het: <b>${c.name}</b>`;
+    else if (state.streak >= 3) msg += ` · ${state.streak} op rij`;
+    setFb(msg, 'good');
+    paintStates();
+    d3.select('#glow').attr('d', null);
+    ringAt = null; updateRing();
+    confetti();
+    updateHud();
+    setTimeout(next, res.kind === 'close' ? 1500 : 850);
+    return;
+  }
+  state.tries++; st.wrong++; state.streak = 0;
+  shake();
+  if (state.tries >= 3) { reveal(); return; }
+  const left = 3 - state.tries;
+  if (res.kind === 'other') setFb(`Nee, ${C[res.id].name} ligt ergens anders. Nog ${left}×`, 'bad');
+  else setFb(`${pick(['Niet goed.', 'Helaas.', 'Nope.'])} Probeer nog eens (${left}×)`, 'bad');
+  input.select();
+}
+
+function reveal() {
+  const k = state.current;
+  state.revealed = true; state.stats[k].revealed = true; state.streak = 0;
+  input.value = ''; input.readOnly = true;
+  setFb(`Dit is <b>${C[k].name}</b>. Hij komt zo nog een keer terug.`);
+  checkBtn.textContent = 'Verder'; checkBtn.classList.add('go');
+}
+function requeue() {
+  const pos = Math.min(state.queue.length, 3 + Math.floor(Math.random() * 3));
+  state.queue.splice(pos, 0, state.current);
+}
+function hint() {
+  if (state.busy || state.finished || state.revealed) return;
+  const name = C[state.current].name;
+  state.hint++; state.stats[state.current].hint++;
+  const shown = name.slice(0, state.hint);
+  if (state.hint >= name.replace(/\s/g, '').length) { reveal(); return; }
+  const rest = name.slice(state.hint).replace(/[^\s-]/g, '_');
+  setFb(`<span class="hint">${shown}${rest}</span>`);
+  input.focus({ preventScroll: true });
+}
+function shake() {
+  input.classList.remove('shake'); void input.offsetWidth; input.classList.add('shake');
+}
+function confetti() {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const game = $('#game'), r = input.getBoundingClientRect(), g = game.getBoundingClientRect();
+  for (let i = 0; i < 18; i++) {
+    const b = document.createElement('i');
+    b.className = 'bit';
+    b.style.left = (r.left - g.left + r.width / 2) + 'px';
+    b.style.top = (r.top - g.top) + 'px';
+    b.style.background = CRAYONS[i % CRAYONS.length];
+    b.style.setProperty('--dx', (Math.random() * 260 - 130) + 'px');
+    b.style.setProperty('--dy', (-60 - Math.random() * 160) + 'px');
+    b.style.setProperty('--r', (Math.random() * 720 - 360) + 'deg');
+    game.appendChild(b);
+    setTimeout(() => b.remove(), 900);
+  }
+}
+
+function finish() {
+  state.finished = true; state.current = null;
+  paintStates(); zoomTo(null); updateHud();
+  input.blur();
+  const n = state.keys.length;
+  const tricky = state.keys.filter(k => { const s = state.stats[k]; return s.wrong || s.hint || s.revealed; });
+  if (!state.practice) {
+    const best = store.get('best.' + state.sub.id);
+    if (!best || state.perfect > best.perfect || best.total !== n) store.set('best.' + state.sub.id, { perfect: state.perfect, total: n });
+  }
+  const pct = state.perfect / n;
+  const title = pct === 1 ? 'Foutloos!' : pct >= .8 ? 'Heel goed!' : pct >= .5 ? 'Netjes!' : 'Klaar!';
+  const sheet = $('#sheet');
+  sheet.innerHTML = `
+    <h3>${title}</h3>
+    <div class="big"><strong>${state.perfect}</strong> van de ${n} meteen goed in ${state.sub.name}${state.practice ? ' (oefenronde)' : ''}.</div>
+    ${tricky.length ? `<div class="note">Deze waren lastig. Tik erop om ze op de kaart te zien:</div><div class="tricky">${tricky.map(k => `<button type="button" data-k="${k}">${C[k].name}</button>`).join('')}</div>` : `<div class="note">Alles in één keer. Tik op een land om de naam te zien.</div>`}
+    <div class="acts">
+      ${tricky.length ? `<button class="btn" type="button" id="practiceBtn">Oefen de lastige</button>` : ''}
+      <button class="btn ${tricky.length ? 'ghost' : ''}" type="button" id="againBtn">Nog een keer</button>
+      <button class="btn ghost" type="button" id="homeBtn">Ander gebied</button>
+    </div>`;
+  sheet.hidden = false;
+  sheet.querySelectorAll('.tricky button').forEach(b => b.addEventListener('click', () => flash(b.dataset.k)));
+  $('#practiceBtn')?.addEventListener('click', () => startRound(state.sub, tricky));
+  $('#againBtn').addEventListener('click', () => startRound(state.sub));
+  $('#homeBtn').addEventListener('click', goHome);
+}
+function flash(k) {
+  showTip(C[k].name);
+  zoomTo(k);
+  d3.select('#glow').attr('d', path(FEAT[k]));
+  setTimeout(() => { if (state.finished) d3.select('#glow').attr('d', null); }, 1800);
+}
+function goHome() {
+  state.finished = true; state.current = null;
+  $('#game').hidden = true; $('#home').hidden = false;
+  renderHome();
+}
+
+/* ================= Events ================= */
+$('#panel').addEventListener('submit', e => { e.preventDefault(); submit(); });
+$('#hintBtn').addEventListener('click', hint);
+$('#skipBtn').addEventListener('click', () => {
+  if (state.busy || state.finished) return;
+  if (state.revealed) { requeue(); next(); } else { state.stats[state.current].wrong++; reveal(); }
+  input.focus({ preventScroll: true });
+});
+// toetsenbord open houden bij tikken op knoppen
+['#checkBtn', '#hintBtn', '#skipBtn'].forEach(s => $(s).addEventListener('pointerdown', e => { if (document.activeElement === input) e.preventDefault(); }));
+$('#fitBtn').addEventListener('click', () => { ringAt = null; svg.transition().duration(500).call(zoom.transform, d3.zoomIdentity); });
+$('#quitBtn').addEventListener('click', goHome);
+
+let rT;
+function onResize() {
+  const vv = window.visualViewport;
+  const h = vv && vv.height < window.innerHeight ? vv.height : window.innerHeight;
+  document.documentElement.style.setProperty('--app-h', h + 'px');
+  window.scrollTo(0, 0);
+  clearTimeout(rT);
+  rT = setTimeout(() => {
+    if ($('#game').hidden || !FEAT) return;
+    drawMap();
+    zoomTo(state.finished ? null : state.current, false);
+  }, 160);
+}
+window.addEventListener('resize', onResize);
+window.visualViewport?.addEventListener('resize', onResize);
+onResize();
+renderHome();
+})();
+</script>
+
+<script>
+if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+</script>
+</body>
+</html>
