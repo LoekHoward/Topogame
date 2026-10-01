@@ -1,6 +1,6 @@
 // Bewaart de app op de telefoon, zodat hij ook zonder internet werkt.
 // Verhoog VERSION na een update, dan haalt de telefoon de nieuwe bestanden op.
-const VERSION = 'topo-krijt-v2';
+const VERSION = 'topo-krijt-v3';
 const FILES = [
   './',
   'index.html',

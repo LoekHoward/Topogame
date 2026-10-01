@@ -69,7 +69,7 @@ button{cursor:pointer}
 
 /* ---------- Home ---------- */
 #home{overflow-y:auto;-webkit-overflow-scrolling:touch}
-.home-inner{max-width:640px;margin:0 auto;padding-inline:16px;padding-block:22px 48px;display:flex;flex-direction:column;gap:26px}
+.home-inner{max-width:640px;margin:0 auto;padding-inline:16px;padding-block:22px 130px;display:flex;flex-direction:column;gap:26px}
 .brand{display:flex;flex-direction:column;gap:4px;align-items:flex-start}
 .brand h1{font-family:var(--font-display);font-weight:400;font-size:clamp(52px,15vw,78px);line-height:.9;margin:0;letter-spacing:.5px}
 .brand h1 .k{color:var(--coral)}
@@ -89,10 +89,16 @@ button{cursor:pointer}
 .chip:nth-child(even){border-radius:var(--sketch2);transform:rotate(.6deg)}
 .chip:nth-child(odd){transform:rotate(-.5deg)}
 .chip:active{transform:translate(2px,3px) rotate(0);box-shadow:1px 1px 0 var(--ink)}
-.chip.all{background:var(--cc)}
+.chip{position:relative}
+.chip.all b{text-decoration:underline;text-decoration-color:var(--cc);text-decoration-thickness:4px;text-underline-offset:3px}
+.chip.on{background:var(--cc)}
+.chip.on::after{content:"";position:absolute;right:-8px;top:-10px;width:26px;height:26px;border-radius:50%;border:2.5px solid var(--ink);background:var(--land) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7' fill='none' stroke='%232B2850' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/18px no-repeat}
+.chip.on small{color:var(--ink)}
+#startBar{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:center;padding-inline:16px;padding-block:28px calc(14px + env(safe-area-inset-bottom,0px));background:linear-gradient(transparent,var(--paper) 40%);pointer-events:none}
+#startBtn{pointer-events:auto;width:100%;max-width:440px;font-size:25px;padding:10px 18px}
+#startBtn:disabled{background:var(--ctx);color:var(--ink-soft);box-shadow:3px 4px 0 var(--ink-soft);border-color:var(--ink-soft)}
 .chip b{font-weight:400;font-size:21px;line-height:1.1}
 .chip small{font-size:15px;color:var(--ink-soft);display:flex;justify-content:space-between;gap:6px}
-.chip.all small{color:var(--ink)}
 .chip .best{color:var(--ink);white-space:nowrap}
 .foot{color:var(--ink-soft);font-size:15px;line-height:1.4}
 
@@ -144,7 +150,7 @@ button{cursor:pointer}
 .btn{border:3px solid var(--ink);border-radius:var(--sketch);background:var(--coral);color:#fff;font-size:22px;padding:6px 18px;box-shadow:3px 4px 0 var(--ink);flex:none}
 .btn:active{transform:translate(2px,3px);box-shadow:1px 1px 0 var(--ink)}
 .btn.ghost{background:var(--land);color:var(--ink);font-size:19px;padding:4px 14px}
-.btn.go{background:var(--good)}
+.btn.ghost:disabled{opacity:.35;box-shadow:none}
 .sub-row{display:flex;gap:10px;justify-content:center}
 
 /* confetti */
@@ -174,11 +180,10 @@ button{cursor:pointer}
       <div class="brand">
         <h1>Topo <span class="k">Krijt</span></h1>
         <svg viewBox="0 0 240 18" aria-hidden="true"><path d="M3 11 C 40 3, 70 16, 110 8 S 180 4, 236 10" fill="none" stroke="var(--coral)" stroke-width="5" stroke-linecap="round"/></svg>
-        <p>Kies een gebied. Eén land krijgt een kleurtje, jij typt de naam. Hoofdletters en accenten maken niet uit.</p>
       </div>
       <div id="conts"></div>
-      <p class="foot">Elk goed land kleur je in. Fout of overgeslagen? Dan komt het land later in de ronde terug. Tip: knijp of veeg op de kaart om in te zoomen.</p>
     </div>
+    <div id="startBar"><button class="btn" id="startBtn" type="button" disabled>Kies een of meer delen</button></div>
   </section>
 
   <section id="game" class="screen" hidden>
@@ -546,6 +551,30 @@ const store = {
 
 /* ================= Home ================= */
 const $ = s => document.querySelector(s);
+const selection = new Set((store.get('sel') || []).filter(id => SUBS.some(s => s.id === id)));
+const selectedSubs = () => SUBS.filter(s => selection.has(s.id));
+const keysOfSubs = subs => [...new Set(subs.flatMap(keysOf))];
+function toggle(s) {
+  if (selection.has(s.id)) selection.delete(s.id);
+  else {
+    // "Alle landen" en "Heel ..." sluiten de losse delen eronder uit, en andersom
+    if (s.world) selection.clear();
+    else {
+      selection.delete('wereld');
+      if (s.all) SUBS.filter(x => x.cont === s.cont).forEach(x => selection.delete(x.id));
+      else selection.delete(s.cont);
+    }
+    selection.add(s.id);
+  }
+  store.set('sel', [...selection]);
+  renderHome();
+}
+function updateStart() {
+  const n = keysOfSubs(selectedSubs()).length;
+  const b = $('#startBtn');
+  b.disabled = !n;
+  b.textContent = n ? `Start · ${n} landen` : 'Kies een of meer delen';
+}
 function renderHome() {
   const wrap = $('#conts');
   wrap.innerHTML = '';
@@ -563,13 +592,15 @@ function renderHome() {
       const best = store.get('best.' + s.id);
       const b = document.createElement('button');
       b.type = 'button';
-      b.className = 'chip' + (s.all ? ' all' : '');
+      b.className = 'chip' + (s.all ? ' all' : '') + (selection.has(s.id) ? ' on' : '');
+      b.setAttribute('aria-pressed', selection.has(s.id));
       b.innerHTML = `<b>${s.name}</b><small><span>${n} landen</span>${best ? `<span class="best">★ ${best.perfect}/${best.total}</span>` : ''}</small>`;
-      b.addEventListener('click', () => startRound(s));
+      b.addEventListener('click', () => toggle(s));
       chips.appendChild(b);
     }
     wrap.appendChild(sec);
   }
+  updateStart();
 }
 
 /* ================= Kaart ================= */
@@ -644,7 +675,7 @@ function drawMap() {
   W = wrap.clientWidth; H = wrap.clientHeight;
   if (!W || !H) return;
   svg.attr('viewBox', `0 0 ${W} ${H}`);
-  const sub = state.sub;
+  const sub = state.view;
   let proj;
   if (sub.world) {
     proj = d3.geoNaturalEarth1().fitExtent([[8, 8], [W - 8, H - 8]], { type: 'Sphere' });
@@ -702,7 +733,7 @@ function zoomTo(k, animate = true) {
   ringAt = null;
   if (k) {
     const b = targetBox(k);
-    const kmax = state.sub.world ? 10 : state.sub.all ? 6 : 4;
+    const kmax = state.view.world ? 10 : state.view.all ? 6 : 4;
     let s = Math.min(Math.max(Math.min(W, H) * 0.26 / b.size, 1), kmax);
     if (s < 1.6) s = 1;
     if (s > 1) t = d3.zoomIdentity.translate(W / 2 - s * b.cx, H / 2 - s * b.cy).scale(s);
@@ -724,17 +755,22 @@ function showTip(text) {
 }
 
 /* ================= Spel ================= */
-const state = { sub: SUBS[0], keys: [], queue: [], done: new Set(), stats: {}, current: null, tries: 0, hint: 0, revealed: false, perfect: 0, streak: 0, finished: false, busy: false, practice: false };
+const state = { subs: [], view: SUBS[0], roundId: '', roundName: '', keys: [], queue: [], done: new Set(), stats: {}, current: null, tries: 0, hint: 0, revealed: false, perfect: 0, streak: 0, finished: false, busy: false, practice: false };
 const input = $('#answer'), fb = $('#feedback'), checkBtn = $('#checkBtn');
 
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 
-async function startRound(sub, only = null) {
-  Object.assign(state, { sub, keys: only || keysOf(sub), done: new Set(), stats: {}, current: null, perfect: 0, streak: 0, finished: false, busy: false, practice: !!only });
+async function startRound(subs, only = null) {
+  Object.assign(state, {
+    subs, keys: only || keysOfSubs(subs), view: null,
+    roundId: subs.map(s => s.id).sort().join('+'),
+    roundName: subs.map(s => s.name).join(' + '),
+    done: new Set(), stats: {}, current: null, perfect: 0, streak: 0, finished: false, busy: false, practice: !!only,
+  });
   state.queue = shuffle([...state.keys]);
   state.keys.forEach(k => state.stats[k] = { wrong: 0, hint: 0, revealed: false });
   $('#home').hidden = true; $('#game').hidden = false; $('#sheet').hidden = true;
-  $('#regionName').textContent = sub.name + (only ? ' · oefenen' : '');
+  $('#regionName').textContent = state.roundName + (only ? ' · oefenen' : '');
   input.readOnly = false; input.value = '';
   updateHud();
   if (!FEAT) {
@@ -742,11 +778,23 @@ async function startRound(sub, only = null) {
     try { await mapReady; } catch { $('#loading').textContent = 'Kaart laden lukt niet. Check je internet en probeer opnieuw.'; return; }
     $('#loading').hidden = true;
   }
+  next();
+}
+
+// Bij een mix van delen springt de kaart naar het deel waar het land in ligt.
+function viewFor(k) {
+  return state.subs.find(s => s.world || (s.all ? C[k].cont === s.cont : C[k].sub === s.id)) || state.subs[0];
+}
+function ensureView(k) {
+  const v = viewFor(k);
+  if (v === state.view) return;
+  state.view = v;
   gCountries.selectAll('path').remove();
   svg.call(zoom.transform, d3.zoomIdentity);
   drawMap();
-  next();
 }
+
+function setButtons(on) { $('#hintBtn').disabled = !on; $('#skipBtn').disabled = !on; }
 
 function next() {
   state.busy = false;
@@ -754,8 +802,9 @@ function next() {
   state.current = state.queue.shift();
   state.tries = 0; state.hint = 0; state.revealed = false;
   input.readOnly = false; input.value = '';
-  checkBtn.textContent = 'Check'; checkBtn.classList.remove('go');
+  setButtons(true);
   setFb('Welk land is dit?');
+  ensureView(state.current);
   paintStates();
   zoomTo(state.current);
   updateHud();
@@ -775,10 +824,23 @@ const pick = a => a[Math.floor(Math.random() * a.length)];
 
 function submit() {
   if (state.busy || state.finished || !state.current) return;
-  if (state.revealed) { requeue(); next(); return; }
   const res = check(input.value, state.current);
   const k = state.current, c = C[k], st = state.stats[k];
   if (res.kind === 'empty') { shake(); return; }
+  if (state.revealed) {
+    // Eerst goed overtypen, dan pas door. Het land komt later in de ronde terug.
+    if (res.kind === 'exact') {
+      state.busy = true;
+      setFb(`Goed overgetypt! <b>${c.name}</b> komt straks terug.`, 'good');
+      requeue();
+      setTimeout(next, 900);
+    } else {
+      shake();
+      setFb(`Typ precies over: <b>${c.name}</b>`, 'bad');
+      input.select();
+    }
+    return;
+  }
   if (res.kind === 'exact' || res.kind === 'close') {
     const first = state.tries === 0 && state.hint === 0 && !st.revealed;
     if (first) { state.perfect++; state.streak++; } else state.streak = 0;
@@ -808,9 +870,10 @@ function submit() {
 function reveal() {
   const k = state.current;
   state.revealed = true; state.stats[k].revealed = true; state.streak = 0;
-  input.value = ''; input.readOnly = true;
-  setFb(`Dit is <b>${C[k].name}</b>. Hij komt zo nog een keer terug.`);
-  checkBtn.textContent = 'Verder'; checkBtn.classList.add('go');
+  input.value = '';
+  setButtons(false);
+  setFb(`Dit is <b>${C[k].name}</b>. Typ het over om door te gaan.`);
+  input.focus({ preventScroll: true });
 }
 function requeue() {
   const pos = Math.min(state.queue.length, 3 + Math.floor(Math.random() * 3));
@@ -853,15 +916,15 @@ function finish() {
   const n = state.keys.length;
   const tricky = state.keys.filter(k => { const s = state.stats[k]; return s.wrong || s.hint || s.revealed; });
   if (!state.practice) {
-    const best = store.get('best.' + state.sub.id);
-    if (!best || state.perfect > best.perfect || best.total !== n) store.set('best.' + state.sub.id, { perfect: state.perfect, total: n });
+    const best = store.get('best.' + state.roundId);
+    if (!best || state.perfect > best.perfect || best.total !== n) store.set('best.' + state.roundId, { perfect: state.perfect, total: n });
   }
   const pct = state.perfect / n;
   const title = pct === 1 ? 'Foutloos!' : pct >= .8 ? 'Heel goed!' : pct >= .5 ? 'Netjes!' : 'Klaar!';
   const sheet = $('#sheet');
   sheet.innerHTML = `
     <h3>${title}</h3>
-    <div class="big"><strong>${state.perfect}</strong> van de ${n} meteen goed in ${state.sub.name}${state.practice ? ' (oefenronde)' : ''}.</div>
+    <div class="big"><strong>${state.perfect}</strong> van de ${n} meteen goed in ${state.roundName}${state.practice ? ' (oefenronde)' : ''}.</div>
     ${tricky.length ? `<div class="note">Deze waren lastig. Tik erop om ze op de kaart te zien:</div><div class="tricky">${tricky.map(k => `<button type="button" data-k="${k}">${C[k].name}</button>`).join('')}</div>` : `<div class="note">Alles in één keer. Tik op een land om de naam te zien.</div>`}
     <div class="acts">
       ${tricky.length ? `<button class="btn" type="button" id="practiceBtn">Oefen de lastige</button>` : ''}
@@ -870,11 +933,12 @@ function finish() {
     </div>`;
   sheet.hidden = false;
   sheet.querySelectorAll('.tricky button').forEach(b => b.addEventListener('click', () => flash(b.dataset.k)));
-  $('#practiceBtn')?.addEventListener('click', () => startRound(state.sub, tricky));
-  $('#againBtn').addEventListener('click', () => startRound(state.sub));
+  $('#practiceBtn')?.addEventListener('click', () => startRound(state.subs, tricky));
+  $('#againBtn').addEventListener('click', () => startRound(state.subs));
   $('#homeBtn').addEventListener('click', goHome);
 }
 function flash(k) {
+  ensureView(k);
   showTip(C[k].name);
   zoomTo(k);
   d3.select('#glow').attr('d', path(FEAT[k]));
@@ -890,10 +954,11 @@ function goHome() {
 $('#panel').addEventListener('submit', e => { e.preventDefault(); submit(); });
 $('#hintBtn').addEventListener('click', hint);
 $('#skipBtn').addEventListener('click', () => {
-  if (state.busy || state.finished) return;
-  if (state.revealed) { requeue(); next(); } else { state.stats[state.current].wrong++; reveal(); }
-  input.focus({ preventScroll: true });
+  if (state.busy || state.finished || state.revealed) return;
+  state.stats[state.current].wrong++;
+  reveal();
 });
+$('#startBtn').addEventListener('click', () => { const subs = selectedSubs(); if (subs.length) startRound(subs); });
 // toetsenbord open houden bij tikken op knoppen
 ['#checkBtn', '#hintBtn', '#skipBtn'].forEach(s => $(s).addEventListener('pointerdown', e => { if (document.activeElement === input) e.preventDefault(); }));
 $('#fitBtn').addEventListener('click', () => { ringAt = null; svg.transition().duration(500).call(zoom.transform, d3.zoomIdentity); });
@@ -907,7 +972,7 @@ function onResize() {
   window.scrollTo(0, 0);
   clearTimeout(rT);
   rT = setTimeout(() => {
-    if ($('#game').hidden || !FEAT) return;
+    if ($('#game').hidden || !FEAT || !state.view) return;
     drawMap();
     zoomTo(state.finished ? null : state.current, false);
   }, 160);
