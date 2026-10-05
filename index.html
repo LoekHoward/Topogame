@@ -79,6 +79,10 @@ button{cursor:pointer}
 .brand h1 .geo{color:var(--ink);transform:rotate(-3deg)}
 .brand h1 .master{color:var(--coral);transform:rotate(2deg) translateY(2px)}
 .brand .sound-btn{align-self:flex-start}
+.modes{display:flex;gap:4px;padding:4px;background:var(--land);border:2.5px solid var(--ink);border-radius:16px 8px 16px 8px/8px 16px 8px 16px;box-shadow:3px 4px 0 var(--ink)}
+.modes button{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;border:2.5px solid transparent;background:none;border-radius:12px;font-size:21px;padding:6px 8px}
+.modes button svg{width:24px;height:24px;flex:none}
+.modes button[aria-pressed="true"]{background:var(--sun);border-color:var(--ink)}
 .cont-head h2{text-shadow:2px 0 var(--paper),-2px 0 var(--paper),0 2px var(--paper),0 -2px var(--paper)}
 .cont-head span{color:var(--ink);background:var(--paper);padding:0 6px;border-radius:var(--sketch)}
 .cont{display:flex;flex-direction:column;gap:12px}
@@ -136,6 +140,19 @@ button{cursor:pointer}
 .map-tools{position:absolute;right:8px;top:8px;display:flex;flex-direction:column;gap:8px}
 .map-tools .icon-btn{width:40px;height:40px}
 #tip{position:absolute;left:50%;top:10px;transform:translateX(-50%) rotate(-1.5deg);background:var(--sun);border:2.5px solid var(--ink);border-radius:var(--sketch);padding:4px 14px;font-size:20px;box-shadow:2px 3px 0 var(--ink);white-space:nowrap;pointer-events:none;max-width:70%;overflow:hidden;text-overflow:ellipsis}
+#flagWrap{flex:1;min-height:0;position:relative;margin-inline:10px;border:3px solid var(--ink);border-radius:22px 30px 20px 28px/28px 20px 30px 22px;overflow:hidden;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='46' height='26'%3E%3Cpath d='M4 9q4-4 8 0t8 0M27 21q4-4 8 0t8 0' fill='none' stroke='%2393CDEB' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E") var(--ocean);box-shadow:3px 4px 0 var(--ink);display:flex;flex-direction:column;gap:10px;padding:16px;min-width:0}
+#flagWrap .flag-box{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:6px}
+#flagWrap .learn{display:flex;align-items:center;gap:10px;min-width:0}
+#flagWrap .learn:not(:has(:not([hidden]))){display:none}
+#flagImg{display:block;flex:none;width:auto;height:auto;max-width:min(100%,420px);max-height:100%;border:3.5px solid var(--ink);border-radius:8px;background:#fff;box-shadow:5px 6px 0 var(--ink);transform:rotate(-2deg);transition:transform .25s ease}
+#flagImg.pop{animation:flagIn .35s ease}
+@keyframes flagIn{from{transform:rotate(-8deg) scale(.6);opacity:0}}
+#mini{flex:none;margin-left:auto;width:clamp(60px,12vh,96px);height:clamp(60px,12vh,96px);border-radius:50%;border:3px solid var(--ink);box-shadow:3px 4px 0 var(--ink);background:var(--ocean);animation:flagIn .35s ease}
+#look{flex:1;min-width:0;max-height:min(40vh,140px);overflow-y:auto;background:var(--land);border:2.5px solid var(--ink);border-radius:var(--sketch);box-shadow:2px 3px 0 var(--ink);padding:5px 10px;font-size:15px;line-height:1.25}
+#look b{font-weight:400;color:var(--coral)}
+#flagWrap.end{flex-direction:column-reverse;justify-content:flex-end}
+#flagWrap.end .flag-box{flex:0 1 auto;max-height:28%}
+@media (max-height:560px){#look{font-size:14px;line-height:1.2}}
 #loading{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--font-display);font-size:30px;color:var(--ink)}
 
 #panel{padding-inline:12px;padding-block:10px 12px;display:flex;flex-direction:column;gap:8px}
@@ -189,6 +206,14 @@ button{cursor:pointer}
           <svg viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="var(--sun)" stroke="var(--ink)" stroke-width="2" stroke-linejoin="round"/><g class="waves" fill="none" stroke="var(--ink)" stroke-width="2.2" stroke-linecap="round"><path d="M15.5 9.2a4 4 0 0 1 0 5.6"/><path d="M18.2 6.8a7.5 7.5 0 0 1 0 10.4"/></g><g class="mute" stroke="var(--coral)" stroke-width="2.6" stroke-linecap="round"><path d="M15.5 9.5l5 5M20.5 9.5l-5 5"/></g></svg>
         </button>
       </div>
+      <div class="modes" role="group" aria-label="Soort spel">
+        <button type="button" data-mode="map" aria-pressed="true">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="var(--c-blue)" stroke="var(--ink)" stroke-width="2"/><path d="M7 8c2 0 2 2 4 2s1 3 3 3 1 3-1 4M15 5c0 2 2 2 3 4" fill="none" stroke="var(--ink)" stroke-width="1.8" stroke-linecap="round"/></svg>Kaart
+        </button>
+        <button type="button" data-mode="flag" aria-pressed="false">
+          <svg viewBox="0 0 24 24"><path d="M5 21V3" stroke="var(--ink)" stroke-width="2.2" stroke-linecap="round"/><path d="M5 4h13l-3 4.5 3 4.5H5z" fill="var(--coral)" stroke="var(--ink)" stroke-width="2" stroke-linejoin="round"/></svg>Vlaggen
+        </button>
+      </div>
       <div id="conts"></div>
     </div>
     <div id="startBar"><button class="btn" id="startBtn" type="button" disabled>Kies een of meer delen</button></div>
@@ -239,6 +264,13 @@ button{cursor:pointer}
       </div>
       <div id="tip" hidden></div>
       <div id="loading" hidden>Kaart tekenen…</div>
+    </div>
+    <div id="flagWrap" hidden>
+      <div class="flag-box"><img id="flagImg" alt="Vlag"></div>
+      <div class="learn">
+        <div id="look" hidden></div>
+        <canvas id="mini" width="200" height="200" aria-hidden="true" hidden></canvas>
+      </div>
     </div>
 
     <form id="panel" autocomplete="off">
@@ -476,6 +508,25 @@ XK|eu-b|Kosovo|
   return { id, sub, cont: sub.split('-')[0], name, alt: alt ? alt.split(';') : [] };
 });
 const C = Object.fromEntries(RAW.map(c => [c.id, c]));
+// vlag-bestand per land (flags/<code>.svg, uit de flag-icons set)
+const FLAG = {"100":"bg","104":"mm","108":"bi","112":"by","116":"kh","120":"cm","124":"ca","132":"cv","140":"cf","144":"lk","148":"td","152":"cl","156":"cn","158":"tw","170":"co","174":"km","178":"cg","180":"cd","188":"cr","191":"hr","192":"cu","196":"cy","203":"cz","204":"bj","208":"dk","212":"dm","214":"do","218":"ec","222":"sv","226":"gq","231":"et","232":"er","233":"ee","242":"fj","246":"fi","250":"fr","262":"dj","266":"ga","268":"ge","270":"gm","275":"ps","276":"de","288":"gh","296":"ki","300":"gr","304":"gl","308":"gd","320":"gt","324":"gn","328":"gy","332":"ht","336":"va","340":"hn","348":"hu","352":"is","356":"in","360":"id","364":"ir","368":"iq","372":"ie","376":"il","380":"it","384":"ci","388":"jm","392":"jp","398":"kz","400":"jo","404":"ke","408":"kp","410":"kr","414":"kw","417":"kg","418":"la","422":"lb","426":"ls","428":"lv","430":"lr","434":"ly","438":"li","440":"lt","442":"lu","450":"mg","454":"mw","458":"my","462":"mv","466":"ml","470":"mt","478":"mr","480":"mu","484":"mx","492":"mc","496":"mn","498":"md","499":"me","504":"ma","508":"mz","512":"om","516":"na","520":"nr","524":"np","528":"nl","531":"cw","533":"aw","534":"sx","548":"vu","554":"nz","558":"ni","562":"ne","566":"ng","578":"no","583":"fm","584":"mh","585":"pw","586":"pk","591":"pa","598":"pg","600":"py","604":"pe","608":"ph","616":"pl","620":"pt","624":"gw","626":"tl","630":"pr","634":"qa","642":"ro","643":"ru","646":"rw","659":"kn","662":"lc","670":"vc","674":"sm","678":"st","682":"sa","686":"sn","688":"rs","690":"sc","694":"sl","702":"sg","703":"sk","704":"vn","705":"si","706":"so","710":"za","716":"zw","724":"es","728":"ss","729":"sd","732":"eh","740":"sr","748":"sz","752":"se","756":"ch","760":"sy","762":"tj","764":"th","768":"tg","776":"to","780":"tt","784":"ae","788":"tn","792":"tr","795":"tm","800":"ug","804":"ua","807":"mk","818":"eg","826":"gb","834":"tz","840":"us","854":"bf","858":"uy","860":"uz","862":"ve","882":"ws","887":"ye","894":"zm","056":"be","040":"at","020":"ad","070":"ba","XK":"xk","008":"al","012":"dz","024":"ao","072":"bw","048":"bh","051":"am","031":"az","004":"af","050":"bd","064":"bt","096":"bn","084":"bz","044":"bs","052":"bb","028":"ag","076":"br","068":"bo","032":"ar","036":"au","090":"sb"};
+const flagSrc = id => `flags/${FLAG[id]}.svg`;
+// vlaggen die sterk op elkaar lijken, met het verschil
+const LOOKALIKE = [
+  { ids: ['148', '642'], tip: 'Tsjaad heeft donkerder blauw dan Roemenië, verder zijn ze bijna gelijk.' },
+  { ids: ['360', '492', '616'], tip: 'Indonesië en Monaco zijn rood boven, wit onder. Polen is andersom: wit boven, rood onder.' },
+  { ids: ['372', '384', '380'], tip: 'Ierland: groen-wit-oranje. Ivoorkust: oranje-wit-groen. Italië: groen-wit-rood.' },
+  { ids: ['528', '442'], tip: 'Luxemburg heeft lichter blauw dan Nederland.' },
+  { ids: ['643', '705', '703', '688'], tip: 'Rusland heeft geen wapen. Slovenië: klein schild met een bergtop. Slowakije: groot rood schild met een dubbel kruis. Servië: rood boven en een adelaar.' },
+  { ids: ['036', '554'], tip: 'Australië heeft witte sterren, Nieuw-Zeeland rode sterren met een witte rand.' },
+  { ids: ['578', '352'], tip: 'Noorwegen is rood met een blauw kruis, IJsland blauw met een rood kruis.' },
+  { ids: ['686', '466', '324'], tip: 'Mali: groen-geel-rood. Senegal: hetzelfde met een groene ster. Guinee: andersom, rood-geel-groen.' },
+  { ids: ['170', '218', '862'], tip: 'Ecuador heeft een wapen in het midden, Venezuela een boog van sterren, Colombia geen van beide.' },
+  { ids: ['056', '276'], tip: 'België heeft staande banen (zwart-geel-rood), Duitsland liggende banen (zwart-rood-goud).' },
+  { ids: ['340', '558', '222'], tip: 'Honduras heeft vijf blauwe sterren, Nicaragua en El Salvador een wapen in het midden.' },
+  { ids: ['634', '048'], tip: 'Qatar is donker bruinrood met negen punten, Bahrein felrood met vijf punten.' },
+  { ids: ['368', '818', '887'], tip: 'Jemen is alleen rood-wit-zwart. Egypte heeft een gouden adelaar, Irak groene letters.' },
+];
 
 const CONTS = [
   { id:'eu', name:'Europa', color:'var(--c-blue)' },
@@ -609,6 +660,15 @@ const sfx = (() => {
 const $ = s => document.querySelector(s);
 const selection = new Set((store.get('sel') || []).filter(id => SUBS.some(s => s.id === id)));
 const selectedSubs = () => SUBS.filter(s => selection.has(s.id));
+let mode = store.get('mode') === 'flag' ? 'flag' : 'map'; // 'map' = kaart, 'flag' = vlaggen
+const unit = () => mode === 'flag' ? 'vlaggen' : 'landen';
+const bestKey = id => (mode === 'flag' ? 'bestf.' : 'best.') + id;
+document.querySelectorAll('.modes button').forEach(b => b.addEventListener('click', () => {
+  if (mode === b.dataset.mode) return;
+  mode = b.dataset.mode; store.set('mode', mode);
+  sfx.pop();
+  renderHome();
+}));
 const keysOfSubs = subs => [...new Set(subs.flatMap(keysOf))];
 function toggle(s) {
   sfx.pop();
@@ -630,9 +690,10 @@ function updateStart() {
   const n = keysOfSubs(selectedSubs()).length;
   const b = $('#startBtn');
   b.disabled = !n;
-  b.textContent = n ? `Start · ${n} landen` : 'Kies een of meer delen';
+  b.textContent = n ? `Start · ${n} ${unit()}` : 'Kies een of meer delen';
 }
 function renderHome() {
+  document.querySelectorAll('.modes button').forEach(b => b.setAttribute('aria-pressed', b.dataset.mode === mode));
   const wrap = $('#conts');
   wrap.innerHTML = '';
   wrap.style.display = 'flex'; wrap.style.flexDirection = 'column'; wrap.style.gap = '26px';
@@ -642,16 +703,16 @@ function renderHome() {
     const sec = document.createElement('div');
     sec.className = 'cont';
     sec.style.setProperty('--cc', cont.color);
-    sec.innerHTML = `<div class="cont-head"><h2>${cont.name}</h2><span>${total} landen</span></div><div class="chips"></div>`;
+    sec.innerHTML = `<div class="cont-head"><h2>${cont.name}</h2><span>${total} ${unit()}</span></div><div class="chips"></div>`;
     const chips = sec.querySelector('.chips');
     for (const s of subs) {
       const n = keysOf(s).length;
-      const best = store.get('best.' + s.id);
+      const best = store.get(bestKey(s.id));
       const b = document.createElement('button');
       b.type = 'button';
       b.className = 'chip' + (s.all ? ' all' : '') + (selection.has(s.id) ? ' on' : '');
       b.setAttribute('aria-pressed', selection.has(s.id));
-      b.innerHTML = `<b>${s.name}</b><small><span>${n} landen</span>${best ? `<span class="best">★ ${best.perfect}/${best.total}</span>` : ''}</small>`;
+      b.innerHTML = `<b>${s.name}</b><small><span>${n} ${unit()}</span>${best ? `<span class="best">★ ${best.perfect}/${best.total}</span>` : ''}</small>`;
       b.addEventListener('click', () => toggle(s));
       chips.appendChild(b);
     }
@@ -872,7 +933,7 @@ function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.fl
 
 async function startRound(subs, only = null) {
   Object.assign(state, {
-    subs, keys: only || keysOfSubs(subs), view: null,
+    mode, subs, keys: only || keysOfSubs(subs), view: null,
     roundId: subs.map(s => s.id).sort().join('+'),
     roundName: subs.map(s => s.name).join(' + '),
     done: new Set(), stats: {}, current: null, perfect: 0, streak: 0, finished: false, busy: false, practice: !!only,
@@ -880,10 +941,13 @@ async function startRound(subs, only = null) {
   state.queue = shuffle([...state.keys]);
   state.keys.forEach(k => state.stats[k] = { wrong: 0, hint: 0, revealed: false });
   $('#home').hidden = true; $('#game').hidden = false; $('#sheet').hidden = true;
-  $('#regionName').textContent = state.roundName + (only ? ' · oefenen' : '');
+  $('#regionName').textContent = state.roundName + (mode === 'flag' ? ' · vlaggen' : '') + (only ? ' · oefenen' : '');
+  $('#mapWrap').hidden = mode === 'flag';
+  $('#flagWrap').hidden = mode !== 'flag';
+  $('#flagWrap').classList.remove('end');
   input.readOnly = false; input.value = '';
   updateHud();
-  if (!FEAT) {
+  if (mode === 'map' && !FEAT) {
     $('#loading').hidden = false;
     try { await mapReady; } catch { $('#loading').textContent = 'Kaart laden lukt niet. Check je internet en probeer opnieuw.'; return; }
     $('#loading').hidden = true;
@@ -915,12 +979,61 @@ function next() {
   input.readOnly = false; input.value = ''; input.placeholder = 'Typ het land…';
   checkBtn.textContent = 'Check'; checkBtn.classList.remove('go');
   setButtons(true);
-  setFb('Welk land is dit?');
-  ensureView(state.current);
-  paintStates();
-  zoomTo(state.current);
+  if (state.mode === 'flag') {
+    setFb('Van welk land is deze vlag?');
+    showFlag(state.current);
+    if (state.queue[0]) new Image().src = flagSrc(state.queue[0]); // volgende vlag alvast laden
+  } else {
+    setFb('Welk land is dit?');
+    ensureView(state.current);
+    paintStates();
+    zoomTo(state.current);
+  }
   updateHud();
   input.focus({ preventScroll: true });
+}
+
+/* ---------- Vlaggen ---------- */
+function showFlag(k) {
+  const img = $('#flagImg');
+  img.src = flagSrc(k);
+  img.classList.remove('pop'); void img.offsetWidth; img.classList.add('pop');
+  $('#mini').hidden = true; $('#look').hidden = true;
+}
+// Na het antwoord: waar ligt het land (mini-wereldbol) en op welke vlag lijkt hij?
+function learnMore(k) {
+  if (state.mode !== 'flag') return;
+  showMini(k);
+  const g = LOOKALIKE.find(x => x.ids.includes(k));
+  const look = $('#look');
+  if (g) {
+    const names = g.ids.filter(x => x !== k).map(x => C[x].name);
+    const others = names.length > 1 ? names.slice(0, -1).join(', ') + ' en ' + names.at(-1) : names[0];
+    look.innerHTML = `<b>Lijkt op ${others}.</b> ${g.tip}`;
+    look.hidden = false;
+  } else look.hidden = true;
+}
+function showMini(k) {
+  if (!LOD) { mapReady.then(() => { if (state.current === k || state.finished) showMini(k); }).catch(() => {}); return; }
+  const cv = $('#mini'), x = cv.getContext('2d'), S = cv.width, R = S / 2 - 4;
+  const [lon, lat] = d3.geoCentroid(FEAT[k]);
+  const proj = d3.geoOrthographic().rotate([-lon, -lat]).translate([S / 2, S / 2]).scale(R).clipAngle(90);
+  const p = d3.geoPath(proj, x);
+  x.clearRect(0, 0, S, S);
+  x.beginPath(); p({ type: 'Sphere' }); x.fillStyle = '#BFE4F6'; x.fill();
+  x.lineJoin = 'round';
+  for (const id in LOD.lo) {
+    if (id === k) continue;
+    x.beginPath(); p(LOD.lo[id]); x.fillStyle = '#FFFDF7'; x.fill();
+    x.strokeStyle = 'rgba(43,40,80,.55)'; x.lineWidth = 1; x.stroke();
+  }
+  x.beginPath(); p(FEAT[k]); x.fillStyle = '#FF5C5C'; x.fill(); x.strokeStyle = '#2B2850'; x.lineWidth = 2; x.stroke();
+  const [[x0, y0], [x1, y1]] = p.bounds(FEAT[k]);
+  if (Math.max(x1 - x0, y1 - y0) < 16) { // klein land: cirkel eromheen
+    x.beginPath(); x.arc(S / 2, S / 2, 16, 0, Math.PI * 2); x.strokeStyle = '#FF5C5C'; x.lineWidth = 5; x.stroke();
+  }
+  cv.hidden = false;
+  cv.style.animation = 'none'; void cv.offsetWidth; cv.style.animation = '';
 }
 
 function setFb(html, cls = '') { fb.innerHTML = html; fb.className = cls; }
@@ -968,6 +1081,7 @@ function submit() {
     paintStates();
     ringAt = null; updateRing();
     updateHud();
+    learnMore(k);
     if (res.kind === 'close') {
       // Goed gerekend, maar wel eerst de juiste spelling overtypen.
       sfx.close();
@@ -1013,6 +1127,7 @@ function reveal() {
   input.value = '';
   setButtons(false);
   setFb(`Dit is <b>${C[k].name}</b>. Typ het over om door te gaan.`);
+  learnMore(k);
   input.focus({ preventScroll: true });
 }
 function requeue() {
@@ -1053,13 +1168,16 @@ function confetti() {
 function finish() {
   state.finished = true; state.current = null;
   sfx.finish();
-  paintStates(); zoomTo(null); updateHud();
+  if (state.mode === 'map') { paintStates(); zoomTo(null); }
+  else { $('#flagWrap').classList.add('end'); $('#mini').hidden = true; $('#look').hidden = true; }
+  updateHud();
   input.blur();
   const n = state.keys.length;
   const tricky = state.keys.filter(k => { const s = state.stats[k]; return s.wrong || s.hint || s.revealed; });
   if (!state.practice) {
-    const best = store.get('best.' + state.roundId);
-    if (!best || state.perfect > best.perfect || best.total !== n) store.set('best.' + state.roundId, { perfect: state.perfect, total: n });
+    const key = (state.mode === 'flag' ? 'bestf.' : 'best.') + state.roundId;
+    const best = store.get(key);
+    if (!best || state.perfect > best.perfect || best.total !== n) store.set(key, { perfect: state.perfect, total: n });
   }
   const pct = state.perfect / n;
   const title = pct === 1 ? 'Foutloos!' : pct >= .8 ? 'Heel goed!' : pct >= .5 ? 'Netjes!' : 'Klaar!';
@@ -1067,7 +1185,7 @@ function finish() {
   sheet.innerHTML = `
     <h3>${title}</h3>
     <div class="big"><strong>${state.perfect}</strong> van de ${n} meteen goed in ${state.roundName}${state.practice ? ' (oefenronde)' : ''}.</div>
-    ${tricky.length ? `<div class="note">Deze waren lastig. Tik erop om ze op de kaart te zien:</div><div class="tricky">${tricky.map(k => `<button type="button" data-k="${k}">${C[k].name}</button>`).join('')}</div>` : `<div class="note">Alles in één keer. Tik op een land om de naam te zien.</div>`}
+    ${tricky.length ? `<div class="note">Deze waren lastig. Tik erop om ${state.mode === 'flag' ? 'de vlag' : 'ze op de kaart'} te zien:</div><div class="tricky">${tricky.map(k => `<button type="button" data-k="${k}">${C[k].name}</button>`).join('')}</div>` : `<div class="note">${state.mode === 'flag' ? 'Alles in één keer goed!' : 'Alles in één keer. Tik op een land om de naam te zien.'}</div>`}
     <div class="acts">
       ${tricky.length ? `<button class="btn" type="button" id="practiceBtn">Oefen de lastige</button>` : ''}
       <button class="btn ${tricky.length ? 'ghost' : ''}" type="button" id="againBtn">Nog een keer</button>
@@ -1080,6 +1198,14 @@ function finish() {
   $('#homeBtn').addEventListener('click', goHome);
 }
 function flash(k) {
+  if (state.mode === 'flag') {
+    showFlag(k);
+    learnMore(k);
+    const look = $('#look'), g = LOOKALIKE.find(x => x.ids.includes(k));
+    look.innerHTML = `<b>${C[k].name}</b>` + (g ? ` · ${look.innerHTML}` : '');
+    look.hidden = false;
+    return;
+  }
   ensureView(k);
   showTip(C[k].name);
   zoomTo(k);
