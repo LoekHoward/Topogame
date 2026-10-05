@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-<title>Topo Krijt</title>
+<title>GeoMaster</title>
 <meta name="description" content="Speels topografie-spel: een land kleurt op en jij typt de naam.">
 <meta name="theme-color" content="#FFF7E8">
 <link rel="manifest" href="manifest.webmanifest">
@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Topo Krijt">
+<meta name="apple-mobile-web-app-title" content="GeoMaster">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -70,11 +70,17 @@ button{cursor:pointer}
 /* ---------- Home ---------- */
 #home{overflow-y:auto;-webkit-overflow-scrolling:touch}
 .home-inner{max-width:640px;margin:0 auto;padding-inline:16px;padding-block:22px 130px;display:flex;flex-direction:column;gap:26px}
-.brand{display:flex;flex-direction:column;gap:4px;align-items:flex-start}
-.brand h1{font-family:var(--font-display);font-weight:400;font-size:clamp(52px,15vw,78px);line-height:.9;margin:0;letter-spacing:.5px}
-.brand h1 .k{color:var(--coral)}
-.brand svg{width:min(240px,62vw);height:18px;margin-top:-2px}
-.brand p{margin:6px 0 0;font-size:19px;line-height:1.35;color:var(--ink-soft);max-width:32ch}
+#homeBg{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;background:var(--ocean)}
+.home-inner{position:relative;z-index:1}
+.brand{display:flex;align-items:center;gap:12px}
+.brand .badge{width:64px;height:64px;flex:none;border-radius:16px;border:3px solid var(--ink);box-shadow:3px 4px 0 var(--ink);transform:rotate(-6deg);background:var(--sun)}
+.brand h1{flex:1;min-width:0;font-family:var(--font-display);font-weight:400;font-size:clamp(46px,13.5vw,74px);line-height:.95;margin:0;letter-spacing:.5px;display:flex;flex-wrap:wrap;column-gap:4px}
+.brand h1 span{display:inline-block;--o:#fff;text-shadow:3px 0 var(--o),-3px 0 var(--o),0 3px var(--o),0 -3px var(--o),2.2px 2.2px var(--o),-2.2px -2.2px var(--o),2.2px -2.2px var(--o),-2.2px 2.2px var(--o),4px 6px 0 var(--ink)}
+.brand h1 .geo{color:var(--ink);transform:rotate(-3deg)}
+.brand h1 .master{color:var(--coral);transform:rotate(2deg) translateY(2px)}
+.brand .sound-btn{align-self:flex-start}
+.cont-head h2{text-shadow:2px 0 var(--paper),-2px 0 var(--paper),0 2px var(--paper),0 -2px var(--paper)}
+.cont-head span{color:var(--ink);background:var(--paper);padding:0 6px;border-radius:var(--sketch)}
 .cont{display:flex;flex-direction:column;gap:12px}
 .cont-head{display:flex;align-items:baseline;gap:10px}
 .cont-head h2{font-family:var(--font-display);font-weight:400;font-size:36px;margin:0;line-height:1;position:relative;z-index:0}
@@ -94,13 +100,12 @@ button{cursor:pointer}
 .chip.on{background:var(--cc)}
 .chip.on::after{content:"";position:absolute;right:-8px;top:-10px;width:26px;height:26px;border-radius:50%;border:2.5px solid var(--ink);background:var(--land) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7' fill='none' stroke='%232B2850' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/18px no-repeat}
 .chip.on small{color:var(--ink)}
-#startBar{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:center;padding-inline:16px;padding-block:28px calc(14px + env(safe-area-inset-bottom,0px));background:linear-gradient(transparent,var(--paper) 40%);pointer-events:none}
+#startBar{position:fixed;z-index:2;left:0;right:0;bottom:0;display:flex;justify-content:center;padding-inline:16px;padding-block:28px calc(14px + env(safe-area-inset-bottom,0px));background:linear-gradient(transparent,var(--paper) 40%);pointer-events:none}
 #startBtn{pointer-events:auto;width:100%;max-width:440px;font-size:25px;padding:10px 18px}
 #startBtn:disabled{background:var(--ctx);color:var(--ink-soft);box-shadow:3px 4px 0 var(--ink-soft);border-color:var(--ink-soft)}
 .chip b{font-weight:400;font-size:21px;line-height:1.1}
 .chip small{font-size:15px;color:var(--ink-soft);display:flex;justify-content:space-between;gap:6px}
 .chip .best{color:var(--ink);white-space:nowrap}
-.foot{color:var(--ink-soft);font-size:15px;line-height:1.4}
 
 /* ---------- Game ---------- */
 #game{display:flex;flex-direction:column;position:relative}
@@ -125,10 +130,8 @@ button{cursor:pointer}
 #map .land{fill:var(--land);stroke:var(--ink);stroke-width:1.3;transition:fill .5s ease}
 #map .land.done{cursor:pointer}
 #map .land.target{fill:url(#hatch);stroke:var(--ink);stroke-width:2.6}
-#map .glow{fill:none;stroke:var(--coral);stroke-width:9;opacity:.45;animation:pulse 1.3s ease-in-out infinite}
-#map .ring{fill:none;stroke:var(--coral);stroke-width:3.5;stroke-dasharray:7 6;animation:spin 3s linear infinite}
-#map .ring,#map .glow{vector-effect:non-scaling-stroke;pointer-events:none}
-@keyframes pulse{50%{opacity:.08;stroke-width:16}}
+#map .land.flash{stroke:var(--coral);stroke-width:4}
+#map .ring{fill:none;stroke:var(--coral);stroke-width:3.5;stroke-dasharray:7 6;animation:spin 3s linear infinite;vector-effect:non-scaling-stroke;pointer-events:none}
 @keyframes spin{to{stroke-dashoffset:-52}}
 .map-tools{position:absolute;right:8px;top:8px;display:flex;flex-direction:column;gap:8px}
 .map-tools .icon-btn{width:40px;height:40px}
@@ -151,6 +154,7 @@ button{cursor:pointer}
 .btn:active{transform:translate(2px,3px);box-shadow:1px 1px 0 var(--ink)}
 .btn.ghost{background:var(--land);color:var(--ink);font-size:19px;padding:4px 14px}
 .btn.ghost:disabled{opacity:.35;box-shadow:none}
+.btn.go{background:var(--good)}
 .sub-row{display:flex;gap:10px;justify-content:center}
 
 /* confetti */
@@ -176,10 +180,14 @@ button{cursor:pointer}
 <body>
 <div id="app">
   <section id="home" class="screen">
+    <canvas id="homeBg" aria-hidden="true"></canvas>
     <div class="home-inner">
       <div class="brand">
-        <h1>Topo <span class="k">Krijt</span></h1>
-        <svg viewBox="0 0 240 18" aria-hidden="true"><path d="M3 11 C 40 3, 70 16, 110 8 S 180 4, 236 10" fill="none" stroke="var(--coral)" stroke-width="5" stroke-linecap="round"/></svg>
+        <img class="badge" src="icons/icon-192.png" alt="" width="64" height="64">
+        <h1><span class="geo">Geo</span><span class="master">Master</span></h1>
+        <button class="icon-btn sound-btn" type="button" aria-label="Geluid uitzetten">
+          <svg viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="var(--sun)" stroke="var(--ink)" stroke-width="2" stroke-linejoin="round"/><g class="waves" fill="none" stroke="var(--ink)" stroke-width="2.2" stroke-linecap="round"><path d="M15.5 9.2a4 4 0 0 1 0 5.6"/><path d="M18.2 6.8a7.5 7.5 0 0 1 0 10.4"/></g><g class="mute" stroke="var(--coral)" stroke-width="2.6" stroke-linecap="round"><path d="M15.5 9.5l5 5M20.5 9.5l-5 5"/></g></svg>
+        </button>
       </div>
       <div id="conts"></div>
     </div>
@@ -199,6 +207,9 @@ button{cursor:pointer}
         <span class="stars"><svg viewBox="0 0 24 24"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6L2.5 9.4l6.6-.8z" fill="var(--sun)" stroke="var(--ink)" stroke-width="2" stroke-linejoin="round"/></svg><span id="starCount">0</span></span>
         <span id="progText">0 / 0</span>
       </div>
+      <button class="icon-btn sound-btn" type="button" aria-label="Geluid uitzetten">
+        <svg viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="var(--sun)" stroke="var(--ink)" stroke-width="2" stroke-linejoin="round"/><g class="waves" fill="none" stroke="var(--ink)" stroke-width="2.2" stroke-linecap="round"><path d="M15.5 9.2a4 4 0 0 1 0 5.6"/><path d="M18.2 6.8a7.5 7.5 0 0 1 0 10.4"/></g><g class="mute" stroke="var(--coral)" stroke-width="2.6" stroke-linecap="round"><path d="M15.5 9.5l5 5M20.5 9.5l-5 5"/></g></svg>
+      </button>
     </div>
 
     <div id="mapWrap">
@@ -213,17 +224,13 @@ button{cursor:pointer}
             <path d="M4 9 q4 -4 8 0 t8 0" fill="none" stroke="var(--ocean-line)" stroke-width="1.6" stroke-linecap="round"/>
             <path d="M27 21 q4 -4 8 0 t8 0" fill="none" stroke="var(--ocean-line)" stroke-width="1.6" stroke-linecap="round"/>
           </pattern>
-          <filter id="wobble" x="-20%" y="-20%" width="140%" height="140%">
-            <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="3" result="n"/>
-            <feDisplacementMap in="SourceGraphic" in2="n" scale="5" xChannelSelector="R" yChannelSelector="G"/>
-          </filter>
         </defs>
         <rect class="ocean" id="oceanRect" x="0" y="0" width="100%" height="100%"/>
         <g id="zoomLayer">
           <path class="grat" id="grat"/>
           <g id="countries"></g>
         </g>
-        <g filter="url(#wobble)"><g id="fxLayer"><path class="glow" id="glow"/><circle class="ring" id="ring" r="0" hidden/></g></g>
+        <g id="fxLayer"><circle class="ring" id="ring" r="0" hidden/></g>
       </svg>
       <div class="map-tools">
         <button class="icon-btn" id="fitBtn" type="button" aria-label="Hele gebied tonen">
@@ -549,12 +556,62 @@ const store = {
   set(k, v) { try { localStorage.setItem('topokrijt.' + k, JSON.stringify(v)); } catch {} },
 };
 
+/* ================= Geluid ================= */
+// Kleine synthesizer-geluidjes, geen bestanden nodig (werkt ook offline).
+const sfx = (() => {
+  let ctx = null, master = null, on = store.get('sound') !== false;
+  function ac() {
+    if (!on) return null;
+    if (!ctx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      ctx = new AC();
+      master = ctx.createGain(); master.gain.value = 0.32; master.connect(ctx.destination);
+    }
+    if (ctx.state === 'suspended') ctx.resume();
+    return ctx;
+  }
+  function tone(freq, start, dur, { type = 'triangle', vol = 0.5, to = null } = {}) {
+    const c = ac(); if (!c) return;
+    const t = c.currentTime + start;
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = type; o.frequency.setValueAtTime(freq, t);
+    if (to) o.frequency.exponentialRampToValueAtTime(to, t + dur);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol, t + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(master);
+    o.start(t); o.stop(t + dur + 0.02);
+  }
+  return {
+    get on() { return on; },
+    toggle() { on = !on; store.set('sound', on); if (on) this.pop(); return on; },
+    unlock() { ac(); },
+    pop() { tone(520, 0, 0.07, { type: 'sine', vol: 0.4, to: 880 }); },
+    correct(streak = 0) {
+      const up = Math.min(streak, 6) * 0.06 + 1; // hoe langer je reeks, hoe hoger
+      [523, 659, 784].forEach((f, i) => tone(f * up, i * 0.075, 0.16, { vol: 0.45 }));
+      tone(1568 * up, 0.22, 0.25, { type: 'sine', vol: 0.18 });
+    },
+    close() { tone(523, 0, 0.14, { vol: 0.4 }); tone(622, 0.1, 0.2, { vol: 0.35 }); },
+    wrong() { tone(220, 0, 0.18, { type: 'square', vol: 0.12, to: 150 }); tone(165, 0.13, 0.22, { type: 'square', vol: 0.1, to: 110 }); },
+    reveal() { tone(392, 0, 0.2, { type: 'sine', vol: 0.4 }); tone(330, 0.16, 0.3, { type: 'sine', vol: 0.35 }); },
+    ding() { tone(988, 0, 0.12, { type: 'sine', vol: 0.4 }); tone(1319, 0.08, 0.25, { type: 'sine', vol: 0.3 }); },
+    hint() { tone(740, 0, 0.09, { type: 'sine', vol: 0.3, to: 600 }); },
+    finish() {
+      [523, 659, 784, 1047].forEach((f, i) => tone(f, i * 0.12, i === 3 ? 0.6 : 0.16, { vol: 0.45 }));
+      [659, 784].forEach(f => tone(f, 0.36, 0.6, { vol: 0.25 }));
+    },
+  };
+})();
+
 /* ================= Home ================= */
 const $ = s => document.querySelector(s);
 const selection = new Set((store.get('sel') || []).filter(id => SUBS.some(s => s.id === id)));
 const selectedSubs = () => SUBS.filter(s => selection.has(s.id));
 const keysOfSubs = subs => [...new Set(subs.flatMap(keysOf))];
 function toggle(s) {
+  sfx.pop();
   if (selection.has(s.id)) selection.delete(s.id);
   else {
     // "Alle landen" en "Heel ..." sluiten de losse delen eronder uit, en andersom
@@ -604,7 +661,9 @@ function renderHome() {
 }
 
 /* ================= Kaart ================= */
-let FEAT = null;          // id -> Feature
+let FEAT = null;          // id -> Feature (volle detail)
+let LOD = null;           // { hi, mid, lo }: minder detail voor grote gebieden, zodat zoomen vloeiend blijft
+let F = null;             // de set die nu getekend wordt
 let BOUNDS = {};          // id -> geoBounds
 let COLOR = {};           // id -> kleur
 const CRAYONS = ['#FFD25A', '#7DD87F', '#6EC1FF', '#FF8FB8', '#B49CFF', '#FFAA5C', '#4FD1C5'];
@@ -623,12 +682,30 @@ const mapReady = fetch('countries-50m.json').then(r => {
     if (!groups.has(k)) groups.set(k, []);
     groups.get(k).push(i);
   });
-  FEAT = {};
-  for (const [k, idx] of groups) {
-    const geometry = idx.length > 1 ? topojson.merge(topo, idx.map(i => geoms[i])) : topojson.feature(topo, geoms[idx[0]]).geometry;
-    FEAT[k] = { type: 'Feature', id: k, geometry };
-    BOUNDS[k] = d3.geoBounds(FEAT[k]);
-  }
+  const build = tp => {
+    const gs = tp.objects.countries.geometries, out = {};
+    for (const [k, idx] of groups) {
+      let geometry;
+      if (idx.length === 1) geometry = topojson.feature(tp, gs[idx[0]]).geometry;
+      else {
+        try { geometry = topojson.merge(tp, idx.map(i => gs[i])); }
+        catch { // vereenvoudigde kaart: stukken los samenvoegen
+          const polys = idx.flatMap(i => { const g = topojson.feature(tp, gs[i]).geometry; return !g ? [] : g.type === 'Polygon' ? [g.coordinates] : g.coordinates; });
+          geometry = { type: 'MultiPolygon', coordinates: polys };
+        }
+      }
+      out[k] = { type: 'Feature', id: k, geometry };
+    }
+    return out;
+  };
+  FEAT = build(topo);
+  for (const k in FEAT) BOUNDS[k] = d3.geoBounds(FEAT[k]);
+  // Elke versie vanaf een verse kopie: een JSON-kopie ná presimplify verliest de 'Infinity'-gewichten.
+  const simplified = q => { const pre = topojson.presimplify(JSON.parse(JSON.stringify(topo))); return topojson.simplify(pre, topojson.quantile(pre, q)); };
+  LOD = { hi: FEAT, mid: build(simplified(0.5)), lo: build(simplified(0.25)) };
+  // Kleine landen (Vaticaanstad, Nauru…) verdwijnen bij vereenvoudigen: die houden hun volle vorm.
+  for (const k in FEAT) if (d3.geoArea(FEAT[k]) < 1e-4) LOD.mid[k] = LOD.lo[k] = FEAT[k];
+  F = FEAT;
   // buurlanden krijgen verschillende kleuren
   const nb = topojson.neighbors(geoms);
   const adj = {};
@@ -647,6 +724,40 @@ const mapReady = fetch('countries-50m.json').then(r => {
     COLOR[k] ||= CRAYONS[start];
   });
 });
+
+// Achtergrond van het startscherm: een ingekleurd stuk wereld (Europa, Afrika, Midden-Oosten).
+function drawHomeBg() {
+  const cv = $('#homeBg');
+  if (!LOD || $('#home').hidden) return;
+  const w = cv.clientWidth, h = cv.clientHeight, dpr = Math.min(window.devicePixelRatio || 1, 2);
+  if (!w || !h) return;
+  cv.width = w * dpr; cv.height = h * dpr;
+  const ctx = cv.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const area = { type: 'MultiPoint', coordinates: [[-22, 70], [58, 70], [-22, -36], [58, -36], [18, 72], [18, -38]] };
+  const proj = d3.geoNaturalEarth1().rotate([-18, 0]).fitHeight(h, area);
+  const [[x0], [x1]] = d3.geoPath(proj).bounds(area);
+  if (x1 - x0 < w) proj.fitWidth(w, area);
+  const [[bx0, by0], [bx1, by1]] = d3.geoPath(proj).bounds(area);
+  const [tx, ty] = proj.translate();
+  proj.translate([tx + (w - (bx0 + bx1)) / 2, ty + (h - (by0 + by1)) / 2]);
+  const p = d3.geoPath(proj, ctx);
+  // zee met golfjes
+  ctx.fillStyle = '#BFE4F6'; ctx.fillRect(0, 0, w, h);
+  ctx.strokeStyle = '#93CDEB'; ctx.lineWidth = 1.6; ctx.lineCap = 'round';
+  for (let y = 14, row = 0; y < h; y += 26, row++) for (let x = (row % 2) * 23 + 4; x < w; x += 46) {
+    ctx.beginPath(); ctx.moveTo(x, y); ctx.quadraticCurveTo(x + 4, y - 5, x + 8, y); ctx.quadraticCurveTo(x + 12, y + 5, x + 16, y); ctx.stroke();
+  }
+  ctx.lineJoin = 'round';
+  for (const k in LOD.lo) {
+    ctx.beginPath(); p(LOD.lo[k]);
+    ctx.fillStyle = COLOR[k] || '#FFFDF7'; ctx.fill();
+    ctx.strokeStyle = '#2B2850'; ctx.lineWidth = 1.2; ctx.stroke();
+  }
+  // zachte papierlaag zodat de knoppen leesbaar blijven
+  ctx.fillStyle = 'rgba(255,247,232,0.45)'; ctx.fillRect(0, 0, w, h);
+}
+mapReady.then(drawHomeBg).catch(e => console.error(e));
 
 const svg = d3.select('#map');
 const zoomLayer = d3.select('#zoomLayer');
@@ -684,15 +795,18 @@ function drawMap() {
     const pts = [];
     for (let i = 0; i <= 8; i++) for (let j = 0; j <= 8; j++) pts.push([l0 + (l1 - l0) * i / 8, a0 + (a1 - a0) * j / 8]);
     proj = d3.geoAzimuthalEqualArea().rotate([-(l0 + l1) / 2, -(a0 + a1) / 2]).clipAngle(90)
-      .fitExtent([[14, 14], [W - 14, H - 14]], { type: 'MultiPoint', coordinates: pts });
+      .fitExtent([[14, 14], [W - 14, H - 14]], { type: 'MultiPoint', coordinates: pts })
+      .clipExtent([[-30, -30], [W + 30, H + 30]]); // alles buiten beeld niet tekenen (scheelt veel bij Rusland, Canada…)
   }
-  path = d3.geoPath(proj);
+  path = d3.geoPath(proj).digits(1);
+  const big = !sub.world && (sub.ext[1] - sub.ext[0]) * (sub.ext[3] - sub.ext[2]) > 600;
+  F = sub.world ? LOD.lo : (sub.all || big) ? LOD.mid : LOD.hi;
   d3.select('#grat').attr('d', path(d3.geoGraticule10()));
   const inRound = new Set(state.keys);
   const ids = Object.keys(FEAT).filter(k => inRound.has(k) || sub.world || inExt(BOUNDS[k], sub.ext, 22));
   ids.sort((a, b) => inRound.has(a) - inRound.has(b));
   gCountries.selectAll('path').data(ids, d => d).join('path')
-    .attr('d', k => path(FEAT[k]))
+    .attr('d', k => path(F[k]))
     .attr('class', k => inRound.has(k) ? 'land' : 'ctx')
     .on('click', (ev, k) => {
       if (!C[k] || !inRound.has(k)) return;
@@ -704,18 +818,15 @@ function drawMap() {
 
 function paintStates() {
   gCountries.selectAll('path.land')
-    .classed('target', k => k === state.current && !state.finished)
+    .classed('target', k => k === state.current && !state.finished && !state.done.has(k))
     .classed('done', k => state.done.has(k))
-    .style('fill', k => (k === state.current && !state.finished) ? null : state.done.has(k) ? COLOR[k] : null);
-  const tgt = gCountries.selectAll('path.target');
-  tgt.raise();
-  const d = (!state.finished && state.current) ? path(FEAT[state.current]) : null;
-  d3.select('#glow').attr('d', d);
+    .style('fill', k => state.done.has(k) ? COLOR[k] : null);
+  gCountries.selectAll('path.target').raise();
 }
 
 let ringAt = null;
 function targetBox(k) {
-  const g = FEAT[k].geometry;
+  const g = F[k].geometry;
   const polys = g.type === 'Polygon' ? [g.coordinates] : g.coordinates;
   let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
   for (const p of polys) {
@@ -725,7 +836,7 @@ function targetBox(k) {
     if (cx < 0 || cx > W || cy < 0 || cy > H) continue;
     x0 = Math.min(x0, b[0][0]); y0 = Math.min(y0, b[0][1]); x1 = Math.max(x1, b[1][0]); y1 = Math.max(y1, b[1][1]);
   }
-  if (!isFinite(x0)) { const b = path.bounds(FEAT[k]); [[x0, y0], [x1, y1]] = b; }
+  if (!isFinite(x0)) { const b = path.bounds(F[k]); [[x0, y0], [x1, y1]] = b; }
   return { cx: (x0 + x1) / 2, cy: (y0 + y1) / 2, size: Math.max(x1 - x0, y1 - y0, 0.5) };
 }
 function zoomTo(k, animate = true) {
@@ -757,7 +868,6 @@ function showTip(text) {
 /* ================= Spel ================= */
 const state = { subs: [], view: SUBS[0], roundId: '', roundName: '', keys: [], queue: [], done: new Set(), stats: {}, current: null, tries: 0, hint: 0, revealed: false, perfect: 0, streak: 0, finished: false, busy: false, practice: false };
 const input = $('#answer'), fb = $('#feedback'), checkBtn = $('#checkBtn');
-
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 
 async function startRound(subs, only = null) {
@@ -801,7 +911,9 @@ function next() {
   if (!state.queue.length) return finish();
   state.current = state.queue.shift();
   state.tries = 0; state.hint = 0; state.revealed = false;
-  input.readOnly = false; input.value = '';
+  state.phase = 'ask'; state.requeueOnNext = false;
+  input.readOnly = false; input.value = ''; input.placeholder = 'Typ het land…';
+  checkBtn.textContent = 'Check'; checkBtn.classList.remove('go');
   setButtons(true);
   setFb('Welk land is dit?');
   ensureView(state.current);
@@ -822,20 +934,28 @@ function updateHud() {
 const PRAISE = ['Goed zo!', 'Top!', 'Knap!', 'Raak!', 'Yes!', 'Lekker bezig!', 'Helemaal goed!', 'Precies!'];
 const pick = a => a[Math.floor(Math.random() * a.length)];
 
+// Fases per land: 'ask' (raden) → 'retype' (overtypen na fout of typfout) → 'wait' (zelf op Volgende tikken)
 function submit() {
   if (state.busy || state.finished || !state.current) return;
-  const res = check(input.value, state.current);
   const k = state.current, c = C[k], st = state.stats[k];
+  if (state.phase === 'wait') {
+    sfx.pop();
+    if (state.requeueOnNext) requeue();
+    next();
+    return;
+  }
+  const res = check(input.value, k);
   if (res.kind === 'empty') { shake(); return; }
-  if (state.revealed) {
-    // Eerst goed overtypen, dan pas door. Het land komt later in de ronde terug.
+  if (state.phase === 'retype') {
     if (res.kind === 'exact') {
-      state.busy = true;
-      setFb(`Goed overgetypt! <b>${c.name}</b> komt straks terug.`, 'good');
-      requeue();
-      setTimeout(next, 900);
+      sfx.ding();
+      if (state.retypeKind === 'reveal') {
+        setFb(`Goed overgetypt! <b>${c.name}</b> komt straks terug.`, 'good');
+        state.requeueOnNext = true;
+      } else setFb(`Top, nu goed gespeld! <b>${c.name}</b>`, 'good');
+      toWait();
     } else {
-      shake();
+      shake(); sfx.wrong();
       setFb(`Typ precies over: <b>${c.name}</b>`, 'bad');
       input.select();
     }
@@ -845,31 +965,51 @@ function submit() {
     const first = state.tries === 0 && state.hint === 0 && !st.revealed;
     if (first) { state.perfect++; state.streak++; } else state.streak = 0;
     state.done.add(k);
-    state.busy = true;
-    let msg = `${pick(PRAISE)} <b>${c.name}</b>`;
-    if (res.kind === 'close') msg = `Goed! Zo schrijf je het: <b>${c.name}</b>`;
-    else if (state.streak >= 3) msg += ` · ${state.streak} op rij`;
-    setFb(msg, 'good');
     paintStates();
-    d3.select('#glow').attr('d', null);
     ringAt = null; updateRing();
-    confetti();
     updateHud();
-    setTimeout(next, res.kind === 'close' ? 1500 : 850);
+    if (res.kind === 'close') {
+      // Goed gerekend, maar wel eerst de juiste spelling overtypen.
+      sfx.close();
+      state.phase = 'retype'; state.retypeKind = 'typo';
+      input.value = '';
+      setButtons(false);
+      setFb(`Bijna goed gespeld! Zo schrijf je het: <b>${c.name}</b>. Typ het over.`);
+      return;
+    }
+    sfx.correct(state.streak);
+    confetti();
+    let msg = `${pick(PRAISE)} <b>${c.name}</b>`;
+    if (state.streak >= 3) msg += ` · ${state.streak} op rij`;
+    setFb(msg, 'good');
+    toWait();
     return;
   }
   state.tries++; st.wrong++; state.streak = 0;
   shake();
   if (state.tries >= 3) { reveal(); return; }
+  sfx.wrong();
   const left = 3 - state.tries;
   if (res.kind === 'other') setFb(`Nee, ${C[res.id].name} ligt ergens anders. Nog ${left}×`, 'bad');
   else setFb(`${pick(['Niet goed.', 'Helaas.', 'Nope.'])} Probeer nog eens (${left}×)`, 'bad');
   input.select();
 }
 
+function toWait() {
+  state.phase = 'wait';
+  input.value = '';
+  input.placeholder = 'Tik op Volgende…';
+  setButtons(false);
+  checkBtn.textContent = 'Volgende';
+  checkBtn.classList.add('go');
+  input.focus({ preventScroll: true });
+}
+
 function reveal() {
   const k = state.current;
+  sfx.reveal();
   state.revealed = true; state.stats[k].revealed = true; state.streak = 0;
+  state.phase = 'retype'; state.retypeKind = 'reveal';
   input.value = '';
   setButtons(false);
   setFb(`Dit is <b>${C[k].name}</b>. Typ het over om door te gaan.`);
@@ -880,8 +1020,9 @@ function requeue() {
   state.queue.splice(pos, 0, state.current);
 }
 function hint() {
-  if (state.busy || state.finished || state.revealed) return;
+  if (state.busy || state.finished || state.phase !== 'ask') return;
   const name = C[state.current].name;
+  sfx.hint();
   state.hint++; state.stats[state.current].hint++;
   const shown = name.slice(0, state.hint);
   if (state.hint >= name.replace(/\s/g, '').length) { reveal(); return; }
@@ -911,6 +1052,7 @@ function confetti() {
 
 function finish() {
   state.finished = true; state.current = null;
+  sfx.finish();
   paintStates(); zoomTo(null); updateHud();
   input.blur();
   const n = state.keys.length;
@@ -941,20 +1083,21 @@ function flash(k) {
   ensureView(k);
   showTip(C[k].name);
   zoomTo(k);
-  d3.select('#glow').attr('d', path(FEAT[k]));
-  setTimeout(() => { if (state.finished) d3.select('#glow').attr('d', null); }, 1800);
+  gCountries.selectAll('path.land').classed('flash', x => x === k).filter(x => x === k).raise();
+  setTimeout(() => gCountries.selectAll('path.flash').classed('flash', false), 1800);
 }
 function goHome() {
   state.finished = true; state.current = null;
   $('#game').hidden = true; $('#home').hidden = false;
   renderHome();
+  drawHomeBg();
 }
 
 /* ================= Events ================= */
 $('#panel').addEventListener('submit', e => { e.preventDefault(); submit(); });
 $('#hintBtn').addEventListener('click', hint);
 $('#skipBtn').addEventListener('click', () => {
-  if (state.busy || state.finished || state.revealed) return;
+  if (state.busy || state.finished || state.phase !== 'ask') return;
   state.stats[state.current].wrong++;
   reveal();
 });
@@ -963,6 +1106,18 @@ $('#startBtn').addEventListener('click', () => { const subs = selectedSubs(); if
 ['#checkBtn', '#hintBtn', '#skipBtn'].forEach(s => $(s).addEventListener('pointerdown', e => { if (document.activeElement === input) e.preventDefault(); }));
 $('#fitBtn').addEventListener('click', () => { ringAt = null; svg.transition().duration(500).call(zoom.transform, d3.zoomIdentity); });
 $('#quitBtn').addEventListener('click', goHome);
+function paintSound() {
+  document.querySelectorAll('.sound-btn').forEach(b => {
+    b.setAttribute('aria-pressed', sfx.on);
+    b.setAttribute('aria-label', sfx.on ? 'Geluid uitzetten' : 'Geluid aanzetten');
+    b.querySelector('.waves').style.display = sfx.on ? '' : 'none';
+    b.querySelector('.mute').style.display = sfx.on ? 'none' : '';
+  });
+}
+document.querySelectorAll('.sound-btn').forEach(b => b.addEventListener('click', () => { sfx.toggle(); paintSound(); }));
+paintSound();
+// Browsers laten pas geluid toe na de eerste tik.
+document.addEventListener('pointerdown', () => sfx.unlock(), { once: true });
 
 let rT;
 function onResize() {
@@ -972,6 +1127,7 @@ function onResize() {
   window.scrollTo(0, 0);
   clearTimeout(rT);
   rT = setTimeout(() => {
+    drawHomeBg();
     if ($('#game').hidden || !FEAT || !state.view) return;
     drawMap();
     zoomTo(state.finished ? null : state.current, false);

@@ -1,6 +1,6 @@
 // Bewaart de app op de telefoon, zodat hij ook zonder internet werkt.
 // Verhoog VERSION na een update, dan haalt de telefoon de nieuwe bestanden op.
-const VERSION = 'topo-krijt-v3';
+const VERSION = 'geomaster-v4';
 const FILES = [
   './',
   'index.html',
@@ -17,7 +17,7 @@ const EXTERNAL = ['fonts.googleapis.com', 'fonts.gstatic.com', 'cdnjs.cloudflare
 self.addEventListener('install', e => {
   // Elk bestand apart, zodat één ontbrekend bestand de rest niet tegenhoudt.
   e.waitUntil(caches.open(VERSION)
-    .then(c => Promise.allSettled(FILES.map(f => c.add(f))))
+    .then(c => Promise.allSettled(FILES.map(f => c.add(new Request(f, { cache: 'reload' })))))
     .then(() => self.skipWaiting()));
 });
 
